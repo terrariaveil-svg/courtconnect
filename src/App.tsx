@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Featured from "./components/Featured";
@@ -79,6 +79,10 @@ const events: SportEvent[] = [
 ];
 
 export default function App() {
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const [page, setPage] = useState("Home");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
@@ -100,11 +104,210 @@ export default function App() {
     setBookings((previous) => previous.filter((booking) => booking.id !== id));
   }
 
+  function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoggedIn(true);
+  }
+
   const filteredFacilities = facilities.filter((facility) =>
     `${facility.name} ${facility.type} ${facility.location}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
+
+  if (!loggedIn) {
+    return (
+      <div className="playr-login-page">
+        <style>{`
+          .playr-login-page {
+            min-height: 100vh;
+            width: 100%;
+            box-sizing: border-box;
+            background: #cecece;
+            color: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            font-family: Arial, Helvetica, sans-serif;
+          }
+
+          .playr-login-container {
+            width: 100%;
+            max-width: 390px;
+          }
+
+          .playr-login-logo {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+          }
+
+          .playr-login-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #071b0b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+          }
+
+          .playr-login-label {
+            color: #b85a00;
+            font-size: 12px;
+            margin: 0 0 8px 26px;
+          }
+
+          .playr-login-container h1 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 6px 23px;
+            color: #111;
+          }
+
+          .playr-login-description {
+            font-size: 12px;
+            line-height: 1.5;
+            margin: 0 0 14px 20px;
+            color: #111;
+          }
+
+          .playr-login-form {
+            min-height: 193px;
+            border: 1px solid #d8d8d8;
+            border-radius: 4px;
+            padding: 10px 9px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+          }
+
+          .playr-login-form label {
+            font-size: 10px;
+            margin-bottom: 4px;
+            color: #111;
+          }
+
+          .playr-login-form input {
+            width: 100%;
+            height: 19px;
+            box-sizing: border-box;
+            border: 1px solid #e3e3e3;
+            border-radius: 4px;
+            background: #fff;
+            padding: 2px 6px;
+            font-size: 10px;
+            margin-bottom: 10px;
+            color: #111;
+          }
+
+          .playr-login-form input::placeholder {
+            color: #b5b5b5;
+          }
+
+          .playr-login-submit {
+            height: 20px;
+            background: #292929;
+            color: #fff;
+            border: 1px solid #111;
+            border-radius: 3px;
+            font-size: 10px;
+            cursor: pointer;
+            margin-bottom: 10px;
+          }
+
+          .playr-login-forgot {
+            align-self: flex-start;
+            padding: 0;
+            background: transparent;
+            border: none;
+            color: #111;
+            text-decoration: underline;
+            font-size: 10px;
+            cursor: pointer;
+          }
+
+          @media (max-width: 480px) {
+            .playr-login-page {
+              padding: 20px;
+            }
+          }
+        `}</style>
+
+        <div className="playr-login-container">
+          <div className="playr-login-logo">
+            <span className="playr-login-icon">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#a8ff65"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+                <path d="M3.5 11.5H12V19.5" />
+                <path d="M12 4.5V11.5H20.5" />
+              </svg>
+            </span>
+            <span>PLAYR</span>
+          </div>
+
+          <div className="playr-login-label">MEMBER ACCESS</div>
+
+          <h1>Welcome back.</h1>
+
+          <p className="playr-login-description">
+            Sign in to manage your bookings and check club availability.
+          </p>
+
+          <form className="playr-login-form" onSubmit={handleLogin}>
+            <label htmlFor="playr-email">Email</label>
+            <input
+              id="playr-email"
+              type="email"
+              placeholder="alex@example.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+
+            <label htmlFor="playr-password">Password</label>
+            <input
+              id="playr-password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
+
+            <button className="playr-login-submit" type="submit">
+              Sign In
+            </button>
+
+            <button
+              className="playr-login-forgot"
+              type="button"
+              onClick={() =>
+                alert("Please contact the administrator to reset your password.")
+              }
+            >
+              Forgot password?
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
