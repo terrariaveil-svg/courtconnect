@@ -1,0 +1,239 @@
+.bc-page {
+  min-height: calc(100vh - 64px);
+  display: grid;
+  place-items: start center;
+  padding: 40px 20px 70px;
+  background: #f3f8f9;
+  font-family: "DM Sans", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  text-align: center;
+}
+
+.bc-page *,
+.bc-page *::before,
+.bc-page *::after {
+  box-sizing: border-box;
+}
+
+.bc-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 32px 30px 30px;
+  background: #ffffff;
+  border: 1px solid #e3ecee;
+  border-radius: 16px;
+  box-shadow: 0 10px 34px rgba(16, 37, 58, 0.08);
+}
+
+/* ---------- Check mark ---------- */
+.bc-check {
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: #dcf8e9;
+  color: #0a8a5a;
+  animation: bc-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes bc-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------- Heading ---------- */
+.bc-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: #0a8a5a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.bc-title {
+  margin: 0 0 8px;
+  color: #10253a;
+  font-family: "Manrope", "DM Sans", sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.bc-sub {
+  margin: 0 0 18px;
+  color: #6b7b88;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.bc-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 7px 14px;
+  border: 1px dashed #b9d9c8;
+  border-radius: 999px;
+  background: #f4fbf7;
+  font-size: 12px;
+}
+
+.bc-ref span {
+  color: #6b7b88;
+}
+
+.bc-ref strong {
+  color: #087a4f;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+/* ---------- Facility ---------- */
+.bc-facility {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px;
+  border: 1px solid #e3ecee;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.bc-facility-img {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.bc-facility > div {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bc-facility strong {
+  color: #10253a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.bc-facility > div > span {
+  color: #6b7b88;
+  font-size: 12px;
+}
+
+.bc-status {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #d8f3e5;
+  color: #087a4f;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ---------- Details ---------- */
+.bc-details {
+  margin: 0 0 20px;
+  padding: 4px 16px;
+  border-radius: 12px;
+  background: #f6faf8;
+  text-align: left;
+}
+
+.bc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e6efea;
+}
+
+.bc-row:last-child {
+  border-bottom: 0;
+}
+
+.bc-row dt {
+  color: #6b7b88;
+  font-size: 12px;
+}
+
+.bc-row dd {
+  margin: 0;
+  color: #10253a;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.bc-total dt {
+  color: #10253a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.bc-total dd {
+  color: #0a8a5a;
+  font-family: "Manrope", "DM Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* ---------- Button ---------- */
+.bc-button {
+  width: 100%;
+  height: 46px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0b9b66, #06784f);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.bc-button:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.bc-button:focus-visible {
+  outline: 3px solid #10253a;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bc-check {
+    animation: none;
+  }
+  .bc-button {
+    transition: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .bc-card {
+    padding: 26px 18px 24px;
+  }
+  .bc-title {
+    font-size: 22px;
+  }
+}

@@ -1,0 +1,282 @@
+.home-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #3f564c;
+  color: #ffffff;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: left;
+}
+
+.home-page *,
+.home-page *::before,
+.home-page *::after {
+  box-sizing: border-box;
+}
+
+/* ---------- Top bar ---------- */
+.home-nav {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  background: #cfcfcf;
+  color: #111111;
+}
+
+.home-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.home-nav-logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.home-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.home-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 260px;
+  height: 40px;
+  padding: 0 16px;
+  background: #ffffff;
+  border: 1px solid #111111;
+  border-radius: 999px;
+}
+
+.home-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.home-bell {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111111;
+  cursor: pointer;
+}
+
+.home-avatar {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #7a7a7a;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.home-avatar:hover {
+  background: #5f5f5f;
+}
+
+/* ---------- Hero ---------- */
+.home-hero {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 54% 46%;
+  min-height: 0;
+}
+
+.home-left {
+  padding: 40px 48px 48px;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-date-label {
+  margin: 0 0 12px;
+  font-size: 26px;
+  font-weight: 400;
+}
+
+.home-date-boxes {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.home-date-boxes input {
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111111;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: text;
+}
+
+.home-date-boxes input:focus {
+  outline: 2px solid #c8e04a;
+  outline-offset: 1px;
+}
+
+.home-date-boxes input:nth-child(1),
+.home-date-boxes input:nth-child(2) {
+  width: 80px;
+}
+
+.home-date-boxes input:nth-child(3) {
+  width: 96px;
+}
+
+.home-greeting {
+  margin: 0 0 56px;
+  font-size: 46px;
+  line-height: 1.15;
+  font-weight: 400;
+}
+
+.home-upnext {
+  margin: 0 0 6px;
+  color: #c8e04a;
+  font-size: 24px;
+}
+
+.home-session {
+  margin: 0 0 20px;
+  font-size: 34px;
+  font-weight: 400;
+}
+
+.home-details {
+  margin: 0 0 auto;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 17px;
+}
+
+.home-details li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 48px;
+}
+
+.home-btn-details {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid #b89600;
+  border-radius: 6px;
+  background: #f5c400;
+  color: #111111;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.home-btn-signout {
+  height: 42px;
+  padding: 0 20px;
+  border: 1px solid #1f3a28;
+  border-radius: 6px;
+  background: #2d4a35;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.home-btn-signout:hover {
+  background: #213a29;
+}
+
+/* ---------- Right photo ---------- */
+.home-right {
+  position: relative;
+  overflow: hidden;
+  background-color: #2f4a37;
+}
+
+.home-right-img {
+  position: absolute;
+  z-index: 0;
+  top: -70px;
+  right: -70px;
+  bottom: -70px;
+  width: calc(220% + 100px);
+  height: calc(100% + 140px);
+  max-width: none;
+  object-fit: cover;
+  object-position: right center;
+}
+
+.home-right .home-quickbook {
+  position: absolute;
+  z-index: 5;
+  top: 56px;
+  right: 24px;
+  height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 6px;
+  background: #ff8a1f;
+  color: #ffffff;
+  font-size: 20px;
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.home-right .home-quickbook:hover {
+  background: #e97a12;
+}
+
+/* ---------- Phones / small windows ---------- */
+@media (max-width: 800px) {
+  .home-nav {
+    padding: 0 16px;
+  }
+  .home-search {
+    width: 150px;
+  }
+  .home-hero {
+    grid-template-columns: 1fr;
+  }
+  .home-left {
+    padding: 28px 20px 36px;
+  }
+  .home-greeting {
+    font-size: 34px;
+    margin-bottom: 36px;
+  }
+  .home-right {
+    min-height: 280px;
+  }
+}

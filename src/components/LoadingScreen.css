@@ -1,0 +1,153 @@
+.load-page {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: #1d3a22;
+  color: #ffffff;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.load-page *,
+.load-page *::before,
+.load-page *::after {
+  box-sizing: border-box;
+}
+
+/* The PNG is a wide banner (dark panel on the left, forest photo on the right).
+   It is scaled up and pinned to the right so only the forest part fills the screen. */
+.load-bg {
+  position: absolute;
+  top: 50%;
+  right: -6vw;
+  width: max(235vw, 310vh);
+  height: auto;
+  max-width: none;
+  display: block;
+  transform: translateY(-50%);
+}
+
+.load-shade {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.load-center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/* ---------- Spinner ---------- */
+.load-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: load-spin 0.9s linear infinite;
+}
+
+@keyframes load-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Text (letters + dots hop up and down) ---------- */
+.load-text-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.load-text {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-size: clamp(30px, 4.2vw, 46px);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.load-char {
+  display: inline-block;
+  animation: load-hop 1.2s ease-in-out infinite;
+}
+
+.load-gap {
+  display: inline-block;
+  width: 0.35em;
+}
+
+@keyframes load-hop {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-0.4em);
+  }
+}
+
+/* ---------- Bar under the text ---------- */
+.load-bar {
+  position: relative;
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.load-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #ffffff;
+  animation-name: load-fill;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: forwards;
+}
+
+.load-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(160, 220, 120, 0.9), transparent);
+  animation: load-shine 1s linear infinite;
+}
+
+@keyframes load-fill {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes load-shine {
+  from {
+    left: -40%;
+  }
+  to {
+    left: 100%;
+  }
+}

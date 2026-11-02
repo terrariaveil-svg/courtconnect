@@ -1,0 +1,494 @@
+.rem-page {
+  min-height: 100vh;
+  width: 100%;
+  background: #f4f4f4;
+  color: #111111;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: left;
+}
+
+.rem-page *,
+.rem-page *::before,
+.rem-page *::after {
+  box-sizing: border-box;
+}
+
+/* ---------- Top bar ---------- */
+.rem-nav {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  background: #ffffff;
+}
+
+.rem-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111111;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.rem-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.rem-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rem-nav-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 160px;
+  height: 30px;
+  padding: 0 12px;
+  background: #ffffff;
+  border: 1px solid #111111;
+  border-radius: 999px;
+}
+
+.rem-nav-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.rem-bell {
+  display: grid;
+  place-items: center;
+  color: #111111;
+}
+
+.rem-avatar {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #7a7a7a;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.rem-avatar:hover {
+  background: #5f5f5f;
+}
+
+/* ---------- Main ---------- */
+.rem-main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px 32px 56px;
+}
+
+.rem-back {
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0f3d1e;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.rem-back:hover {
+  text-decoration: underline;
+}
+
+.rem-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.rem-title {
+  margin: 0 0 6px;
+  color: #0f3d1e;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.rem-subtitle {
+  margin: 0;
+  color: #555555;
+  font-size: 14px;
+}
+
+.rem-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-top: 8px;
+  padding: 3px 9px;
+  border: 1px solid #d6d6d6;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f3d1e;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.rem-dot {
+  width: 6px;
+  height: 6px;
+  display: inline-block;
+  border-radius: 50%;
+  background: #1f8a3a;
+}
+
+.rem-dot-due {
+  background: #e0a800;
+}
+
+/* ---------- Card ---------- */
+.rem-card {
+  background: #ffffff;
+  border: 1px solid #dcdcdc;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.rem-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+}
+
+.rem-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.rem-tab {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #0f3d1e;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.rem-tab:hover {
+  background: #f1f1f1;
+}
+
+.rem-tab.is-active {
+  background: #f5c400;
+  color: #111111;
+  font-weight: 700;
+}
+
+.rem-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rem-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 190px;
+  height: 28px;
+  padding: 0 12px;
+  background: #ffffff;
+  border: 1px solid #cfcfcf;
+  border-radius: 999px;
+  color: #444444;
+}
+
+.rem-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.rem-sort {
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: #0f3d1e;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ---------- Table ---------- */
+.rem-table-wrap {
+  overflow-x: auto;
+}
+
+.rem-table {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: collapse;
+}
+
+.rem-table th {
+  padding: 9px 16px;
+  background: #f1f1f1;
+  color: #666666;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.rem-table td {
+  padding: 14px 16px;
+  border-top: 1px solid #ececec;
+  vertical-align: middle;
+  font-size: 12px;
+}
+
+.rem-table tr.is-due td {
+  background: #f2f2f2;
+}
+
+.rem-cell-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rem-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #0f3d1e;
+}
+
+.rem-row-title {
+  display: block;
+  color: #0f3d1e;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.rem-row-text {
+  display: block;
+  max-width: 340px;
+  color: #555555;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.rem-session-day,
+.rem-with-name {
+  display: block;
+  color: #0f3d1e;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.rem-session-time,
+.rem-with-role {
+  display: block;
+  color: #555555;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.rem-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rem-status-due {
+  background: #fdf0b8;
+  color: #6b4a00;
+}
+
+.rem-status-scheduled {
+  background: #e3f1e6;
+  color: #0f3d1e;
+}
+
+.rem-view {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111111;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rem-view:hover {
+  text-decoration: underline;
+}
+
+.rem-empty {
+  padding: 28px 16px;
+  color: #666666;
+  text-align: center;
+}
+
+/* ---------- Footer ---------- */
+.rem-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-top: 1px solid #ececec;
+}
+
+.rem-showing {
+  color: #666666;
+  font-size: 11px;
+}
+
+.rem-pager {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rem-page-btn {
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: #444444;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.rem-page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rem-page-num {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #444444;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.rem-page-num.is-active {
+  background: #f5c400;
+  color: #111111;
+  font-weight: 700;
+}
+
+/* ---------- Tip banner ---------- */
+.rem-tip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #fdf3c4;
+  color: #3d3200;
+}
+
+.rem-tip-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #0f3d1e;
+}
+
+.rem-tip strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #111111;
+}
+
+.rem-tip span {
+  font-size: 11px;
+  color: #444444;
+}
+
+/* ---------- Small screens ---------- */
+@media (max-width: 700px) {
+  .rem-nav {
+    padding: 0 16px;
+  }
+  .rem-nav-search {
+    display: none;
+  }
+  .rem-main {
+    padding: 20px 16px 40px;
+  }
+  .rem-head {
+    flex-direction: column;
+  }
+  .rem-title {
+    font-size: 26px;
+  }
+  .rem-search {
+    width: 100%;
+  }
+  .rem-tools {
+    width: 100%;
+  }
+}

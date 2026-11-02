@@ -1,70 +1,69 @@
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+import './Login.css';
+import logo from '../assets/courtconnect-logo.png';
 
-import { useState } from "react";
-import "./Login.css";
+type LoginProps = {
+  onLogin: (email: string, password: string) => void;
+};
 
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function Login({ onLogin }: LoginProps) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    alert("Login submitted!");
-  };
-
-  const handleForgotPassword = () => {
-    alert("Please contact the administrator to reset your password.");
+    onLogin(email, password);
   };
 
   return (
-    <div className="login-page">
-      <div className="login-container">
-        <div className="login-logo">
-          <span className="playr-icon">▦</span>
+    <main className="login-page">
+      <section className="login-container">
+        <div className="login-brand">
+          <img src={logo} alt="CourtConnect logo" className="login-logo" />
           <span>PLAYR</span>
         </div>
 
-        <div className="login-label">MEMBER ACCESS</div>
-
-        <h1>Welcome back.</h1>
-
-        <p className="login-description">
+        <p className="login-eyebrow">MEMBER ACCESS</p>
+        <h1 className="login-title">Welcome back.</h1>
+        <p className="login-subtitle">
           Sign in to manage your bookings and check club availability.
         </p>
 
-        <form className="login-form" onSubmit={handleLogin}>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            placeholder="alex@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+        <form className="login-form" onSubmit={handleSubmit}>
+          <div className="login-field">
+            <label htmlFor="login-email">Email</label>
+            <input
+              id="login-email"
+              type="email"
+              placeholder="alex@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div className="login-field">
+            <label htmlFor="login-password">Password</label>
+            <input
+              id="login-password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
           <button type="submit" className="login-button">
             Sign In
           </button>
 
-          <button
-            type="button"
-            className="forgot-password"
-            onClick={handleForgotPassword}
-          >
+          <a href="#" className="login-forgot">
             Forgot password?
-          </button>
+          </a>
         </form>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

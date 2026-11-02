@@ -1,125 +1,128 @@
-
 .login-page {
-  min-height: 100vh;
-  background: #cecece;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
   display: flex;
-  justify-content: center;
   align-items: center;
-  font-family: Arial, Helvetica, sans-serif;
-  color: #111;
+  justify-content: center;
+  padding: 20px 16px;
+  background: #cccccc;
+  color: #111111;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: left;
+}
+
+.login-page *,
+.login-page *::before,
+.login-page *::after {
   box-sizing: border-box;
-  padding: 24px;
 }
 
 .login-container {
   width: 100%;
-  max-width: 390px;
+  max-width: 700px;
+  margin: auto;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 24px;
+  font-weight: 700;
 }
 
 .login-logo {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: bold;
-  margin-bottom: 10px;
+  width: 76px;
+  height: 76px;
+  margin: -11px 0 -11px -13px;
+  object-fit: contain;
 }
 
-.playr-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #071b0b;
-  color: #b6ff70;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
+.login-eyebrow {
+  margin: 0;
+  color: #a85a00;
+  font-size: 17px;
+  font-weight: 500;
 }
 
-.login-label {
-  color: #b85a00;
-  font-size: 12px;
-  margin-left: 26px;
-  margin-bottom: 8px;
-}
-
-.login-container h1 {
-  font-size: 22px;
+.login-title {
+  margin: 4px 0 6px;
+  font-size: 36px;
+  line-height: 1.15;
   font-weight: 700;
-  margin: 0 0 6px 23px;
 }
 
-.login-description {
-  font-size: 12px;
-  margin: 0 0 14px 20px;
-  line-height: 1.5;
+.login-subtitle {
+  margin: 0 0 24px;
+  font-size: 17px;
+  line-height: 1.4;
 }
 
 .login-form {
-  min-height: 193px;
-  border: 1px solid #d8d8d8;
-  border-radius: 4px;
-  padding: 10px 9px;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  min-height: 340px;
+  padding: 22px 20px;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
 }
 
-.login-form label {
-  font-size: 10px;
-  margin-bottom: 4px;
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.login-form input {
+.login-field label {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.login-field input {
   width: 100%;
-  height: 19px;
-  box-sizing: border-box;
-  border: 1px solid #e3e3e3;
-  border-radius: 4px;
-  background: #fff;
-  padding: 2px 6px;
-  font-size: 10px;
-  margin-bottom: 10px;
-  color: #111;
+  height: 42px;
+  padding: 0 14px;
+  font-size: 15px;
+  font-family: inherit;
+  color: #111111;
+  background: #ffffff;
+  border: 0;
+  border-radius: 8px;
 }
 
-.login-form input::placeholder {
-  color: #b5b5b5;
+.login-field input::placeholder {
+  color: #a3a3a3;
 }
 
 .login-button {
-  height: 20px;
-  background: #292929;
-  color: #fff;
-  border: 1px solid #111;
-  border-radius: 3px;
-  font-size: 10px;
+  height: 42px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #ffffff;
+  background: #262626;
+  border: 0;
+  border-radius: 8px;
   cursor: pointer;
-  margin-bottom: 10px;
 }
 
-.forgot-password {
+.login-button:hover {
+  background: #000000;
+}
+
+.login-forgot {
   align-self: flex-start;
-  padding: 0;
-  background: transparent;
-  border: none;
-  color: #111;
+  font-size: 15px;
+  color: #111111;
   text-decoration: underline;
-  font-size: 10px;
-  cursor: pointer;
 }
 
-@media (max-width: 480px) {
-  .login-page {
-    padding: 20px;
-  }
-
-  .login-container {
-    max-width: 390px;
-  }
-
-  .login-container h1 {
-    font-size: 22px;
-  }
+@media (max-width: 700px) {
+  .login-title { font-size: 30px; }
+  .login-subtitle { font-size: 15px; }
+  .login-form { min-height: 0; }
 }

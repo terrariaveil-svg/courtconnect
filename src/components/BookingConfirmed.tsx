@@ -1,5 +1,4 @@
-
-import { CheckCircle2, CalendarDays, MapPin } from "lucide-react";
+import "./BookingConfirmed.css";
 import type { Booking } from "./BookingForm";
 
 interface Props {
@@ -8,25 +7,68 @@ interface Props {
 }
 
 export default function BookingConfirmed({ booking, onDone }: Props) {
+  const reference = `CC-${String(booking.id).slice(-6)}`;
+
+  const rows = [
+    { label: "Date", value: booking.date },
+    { label: "Time", value: `${booking.startTime} – ${booking.endTime}` },
+    { label: "Location", value: booking.facility.location },
+    { label: "Booked by", value: booking.customer },
+  ];
+
   return (
-    <section className="confirmation-card">
-      <div className="confirmation-icon"><CheckCircle2 size={44} /></div>
-      <span className="eyebrow">BOOKING SUCCESSFUL</span>
-      <h2>Your Court Is Reserved!</h2>
-      <p>Your booking details are shown below.</p>
+    <div className="bc-page">
+      <section className="bc-card" aria-live="polite">
+        <div className="bc-check" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            width="34"
+            height="34"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 12.5l4.5 4.5L19 7.500" />
+          </svg>
+        </div>
 
-      <div className="confirmation-details">
-        <div><span>Facility</span><strong>{booking.facility.name}</strong></div>
-        <div><span>Booked by</span><strong>{booking.customer}</strong></div>
-        <div><span><CalendarDays size={16} /> Date</span><strong>{booking.date}</strong></div>
-        <div><span>Time</span><strong>{booking.startTime} – {booking.endTime}</strong></div>
-        <div><span><MapPin size={16} /> Location</span><strong>{booking.facility.location}</strong></div>
-        <div><span>Status</span><strong className="green">{booking.status}</strong></div>
-      </div>
+        <span className="bc-eyebrow">Booking successful</span>
+        <h1 className="bc-title">Your space is reserved!</h1>
+        <p className="bc-sub">We saved your booking. Show this reference when you arrive.</p>
 
-      <button className="button button-primary button-full" onClick={onDone}>
-        View My Bookings
-      </button>
-    </section>
+        <div className="bc-ref">
+          <span>Reference</span>
+          <strong>{reference}</strong>
+        </div>
+
+        <div className="bc-facility">
+          <img src={booking.facility.image} alt="" className="bc-facility-img" />
+          <div>
+            <strong>{booking.facility.name}</strong>
+            <span>{booking.facility.type}</span>
+          </div>
+          <span className="bc-status">{booking.status}</span>
+        </div>
+
+        <dl className="bc-details">
+          {rows.map((row) => (
+            <div className="bc-row" key={row.label}>
+              <dt>{row.label}</dt>
+              <dd>{row.value}</dd>
+            </div>
+          ))}
+          <div className="bc-row bc-total">
+            <dt>Total</dt>
+            <dd>₱{booking.facility.price}</dd>
+          </div>
+        </dl>
+
+        <button type="button" className="bc-button" onClick={onDone}>
+          View My Bookings
+        </button>
+      </section>
+    </div>
   );
 }

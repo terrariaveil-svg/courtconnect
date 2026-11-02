@@ -1,5 +1,5 @@
-
-import { MapPin, Clock } from "lucide-react";
+import VenueDetail from "./VenueDetail";
+import type { Booking } from "./BookingForm";
 
 export interface Facility {
   id: number;
@@ -13,39 +13,41 @@ export interface Facility {
 
 interface Props {
   facility: Facility;
-  onBook: (facility: Facility) => void;
+  onBook?: (facility: Facility) => void;
+  onRent?: (booking: Booking) => void;
+  userName?: string;
+  unreadCount?: number;
+  onBack?: () => void;
+  onOpenProfile?: () => void;
+  onOpenBookings?: () => void;
 }
 
-export default function AvailableSpaces({ facility, onBook }: Props) {
+// The Available Spaces page: the full venue layout from the Figma design
+export default function AvailableSpaces({
+  facility,
+  onBook,
+  onRent,
+  userName,
+  unreadCount = 0,
+  onBack = () => undefined,
+  onOpenProfile = () => undefined,
+  onOpenBookings = () => undefined,
+}: Props) {
   return (
-    <article className="facility-card">
-      <div className="facility-image-wrap">
-        <img className="facility-image" src={facility.image} alt={facility.name} />
-        <span className="image-tag">{facility.type}</span>
-      </div>
-
-      <div className="facility-content">
-        <div className="facility-title-row">
-          <h3>{facility.name}</h3>
-          <span className="available-dot" title="Available" />
-        </div>
-
-        <p className="location-line"><MapPin size={16} /> {facility.location}</p>
-        <p className="facility-description">{facility.description}</p>
-
-        <div className="facility-footer">
-          <div>
-            <strong className="price">₱{facility.price.toLocaleString()}</strong>
-            <span className="price-unit"> / hour</span>
-          </div>
-          <button
-            className="button button-primary button-small"
-            onClick={() => onBook(facility)}
-          >
-            Book Now
-          </button>
-        </div>
-      </div>
-    </article>
+    <VenueDetail
+      facility={facility}
+      userName={userName}
+      unreadCount={unreadCount}
+      onBack={onBack}
+      onOpenProfile={onOpenProfile}
+      onOpenBookings={onOpenBookings}
+      onRent={(booking) => {
+        if (onRent) {
+          onRent(booking);
+        } else {
+          onBook?.(facility);
+        }
+      }}
+    />
   );
 }
