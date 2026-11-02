@@ -1,4 +1,4 @@
-import AvailableSpaces from './AvailableSpaces';
+import VenueDetail from './VenueDetail';
 import type { Booking } from './BookingForm';
 import type { SpaceChoice } from './QuickBook';
 import { spacesFor } from './spacesData';
@@ -13,6 +13,8 @@ type SpacesPageProps = {
   onHome: () => void;
   onOpenProfile: () => void;
   onOpenBookings: () => void;
+  onOpenSpaces: () => void;
+  onOpenEvents: () => void;
 };
 
 export default function SpacesPage({
@@ -20,22 +22,28 @@ export default function SpacesPage({
   onBooked,
   userName,
   unreadCount,
+  bookingCount,
   onHome,
   onOpenProfile,
   onOpenBookings,
+  onOpenSpaces,
+  onOpenEvents,
 }: SpacesPageProps) {
-  // Court -> Rally Badminton Club, Gym floor -> the gym space
+  // Court -> first court, Gym floor -> first gym space
   const facility = spacesFor(choice)[0];
 
   return (
-    <AvailableSpaces
+    <VenueDetail
       key={facility.id}
       facility={facility}
       userName={userName}
       unreadCount={unreadCount}
+      bookingCount={bookingCount}
       onBack={onHome}
       onOpenProfile={onOpenProfile}
       onOpenBookings={onOpenBookings}
+      onOpenSpaces={onOpenSpaces}
+      onOpenEvents={onOpenEvents}
       onRent={onBooked}
     />
   );

@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import './VenueDetail.css';
-import logo from '../assets/courtconnect-logo.png';
+import TopNav from './TopNav';
 import type { Facility } from './AvailableSpaces';
 import type { Booking } from './BookingForm';
-import { NotifBadge } from './NotifAlerts';
 
 type VenueDetailProps = {
   facility: Facility;
   userName?: string;
   unreadCount: number;
+  bookingCount?: number;
   onBack: () => void;
   onOpenProfile: () => void;
   onOpenBookings: () => void;
+  onOpenSpaces?: () => void;
+  onOpenEvents?: () => void;
   onRent: (booking: Booking) => void;
 };
 
@@ -128,9 +130,12 @@ export default function VenueDetail({
   facility,
   userName = 'Alex',
   unreadCount,
+  bookingCount = 0,
   onBack,
   onOpenProfile,
   onOpenBookings,
+  onOpenSpaces,
+  onOpenEvents,
   onRent,
 }: VenueDetailProps) {
   const [slot, setSlot] = useState(SLOTS[0]);
@@ -184,55 +189,21 @@ export default function VenueDetail({
 
   return (
     <div className="vd-page">
-      {/* Top bar */}
-      <header className="vd-nav">
-        <button type="button" className="vd-brand" onClick={onBack} aria-label="Back to home">
-          <img src={logo} alt="" className="vd-logo" />
-          <span>PLAYR</span>
-        </button>
-
-        <nav className="vd-links" aria-label="Main">
-          <button type="button" className="vd-link is-active" onClick={onBack}>
-            Available Spaces
-          </button>
-          <span className="vd-link vd-link-muted">Events</span>
-          <button type="button" className="vd-link" onClick={onOpenBookings}>
-            My Bookings
-          </button>
-          <span className="vd-link vd-link-muted">About</span>
-        </nav>
-
-        <div className="vd-nav-right">
-          <label className="vd-search">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="7" />
-              <path d="M20 20l-3.5-3.5" />
-            </svg>
-            <input type="text" placeholder="Search by venue, location or sport..." />
-          </label>
-
-          <span className="alert-wrap">
-            <span className="vd-bell" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M6 9a6 6 0 1 1 12 0c0 6 2 7 2 7H4s2-1 2-7" />
-                <path d="M10 20a2 2 0 0 0 4 0" />
-              </svg>
-            </span>
-            <NotifBadge count={unreadCount} />
-          </span>
-
-          <button type="button" className="vd-user" onClick={onOpenProfile} aria-label="Open user info">
-            <span className="vd-avatar">{userName.charAt(0).toUpperCase()}</span>
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </button>
-        </div>
-      </header>
+      <TopNav
+        active="spaces"
+        userName={userName}
+        unreadCount={unreadCount}
+        bookingCount={bookingCount}
+        onHome={onBack}
+        onOpenProfile={onOpenProfile}
+        onOpenBookings={onOpenBookings}
+        onOpenSpaces={onOpenSpaces}
+        onOpenEvents={onOpenEvents}
+      />
 
       <main className="vd-main">
         <button type="button" className="vd-back" onClick={onBack}>
-          ‹ Back to Home
+          ‹ Back to Available Spaces
         </button>
 
         <div className="vd-grid">

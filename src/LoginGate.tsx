@@ -11,6 +11,10 @@ import SpacesShell from './components/SpacesShell';
 import SpacesPage from './components/SpacesPage';
 import BookingConfirmed from './components/BookingConfirmed';
 import MyBookings from './components/MyBookings';
+import EventsScreen from './components/EventsScreen';
+import EventDetail from './components/EventDetail';
+import { EVENTS } from './components/eventsList';
+import { infoFor } from './components/eventDetails';
 import type { Booking } from './components/BookingForm';
 import type { SpaceChoice } from './components/QuickBook';
 import { INITIAL_NOTICES } from './components/notificationsData';
@@ -29,7 +33,9 @@ type Screen =
   | 'reminders'
   | 'spaces'
   | 'confirmed'
-  | 'mybookings';
+  | 'mybookings'
+  | 'events'
+  | 'event';
 
 export default function LoginGate() {
   // The app starts on the loading screen, then goes to the login
@@ -43,6 +49,10 @@ export default function LoginGate() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [lastBooking, setLastBooking] = useState<Booking | null>(null);
 
+  // Events: which one is open, and the spots you reserved (event id -> spots)
+  const [eventId, setEventId] = useState<number | null>(null);
+  const [registrations, setRegistrations] = useState<Record<number, number>>({});
+
   const unreadCount = notices.filter((n) => n.unread).length;
 
   const markRead = (id: number) => {
@@ -55,6 +65,23 @@ export default function LoginGate() {
 
   const dismissReminders = () => {
     setReminders([]);
+  };
+
+  const pushNotice = (title: string, text: string, day: string, time: string) => {
+    setNotices((list) => [
+      {
+        id: Math.max(0, ...list.map((n) => n.id)) + 1,
+        order: Math.min(0, ...list.map((n) => n.order)) - 1,
+        icon: 'calendar',
+        title,
+        text,
+        day,
+        time,
+        type: 'Confirmation',
+        unread: true,
+      },
+      ...list,
+    ]);
   };
 
   // Loading screen finished -> login
@@ -73,6 +100,8 @@ export default function LoginGate() {
     setReminders(INITIAL_REMINDERS);
     setBookings([]);
     setLastBooking(null);
+    setRegistrations({});
+    setEventId(null);
     setToastOpen(false);
     setScreen('login');
   };
@@ -93,14 +122,45 @@ export default function LoginGate() {
     setBookings((list) => list.filter((b) => b.id !== id));
   };
 
-  // Props shared by the pages that use the spaces top bar
+  // Events -> "View Event"
+  const openEvent = (id: number) => {
+    setEventId(id);
+    setScreen('event');
+  };
+
+  const registerForEvent = (id: number, spots: number) => {
+    setRegistrations((prev) => ({ ...prev, [id]: spots }));
+    const event = EVENTS.find((e) => e.id === id);
+    if (event) {
+      pushNotice(
+        `Registered: ${event.name}`,
+        `You reserved ${spots} spot${spots === 1 ? '' : 's'} for ${event.name} on ${event.date}.`,
+        event.date,
+        infoFor(id).time,
+      );
+    }
+  };
+
+  const cancelRegistration = (id: number) => {
+    setRegistrations((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  // Props shared by the pages that use the top bar
   const shell = {
     unreadCount,
     bookingCount: bookings.length,
     onHome: () => setScreen('home'),
     onOpenProfile: () => setScreen('profile'),
     onOpenBookings: () => setScreen('mybookings'),
+    onOpenSpaces: () => setScreen('spaces'),
+    onOpenEvents: () => setScreen('events'),
   };
+
+  const currentEvent = EVENTS.find((e) => e.id === eventId);
 
   if (screen === 'loading') {
     return <LoadingScreen onDone={finishLoading} />;
@@ -129,9 +189,36 @@ export default function LoginGate() {
     );
   }
 
+  if (screen === 'event' && currentEvent) {
+    return (
+      <SpacesShell {...shell} active="events">
+        <EventDetail
+          key={currentEvent.id}
+          event={currentEvent}
+          others={EVENTS.filter((e) => e.id !== currentEvent.id)}
+          tickets={registrations[currentEvent.id] ?? 0}
+          onBack={() => setScreen('events')}
+          onRegister={registerForEvent}
+          onCancel={cancelRegistration}
+          onOpenEvent={openEvent}
+        />
+      </SpacesShell>
+    );
+  }
+
+  if (screen === 'events' || screen === 'event') {
+    return (
+      <SpacesShell {...shell} active="events">
+        <div className="sp-content">
+          <EventsScreen events={EVENTS} onOpenEvent={openEvent} />
+        </div>
+      </SpacesShell>
+    );
+  }
+
   if (screen === 'confirmed' && lastBooking) {
     return (
-      <SpacesShell {...shell}>
+      <SpacesShell {...shell} active="spaces">
         <BookingConfirmed booking={lastBooking} onDone={() => setScreen('mybookings')} />
       </SpacesShell>
     );
@@ -139,7 +226,7 @@ export default function LoginGate() {
 
   if (screen === 'mybookings' || screen === 'confirmed') {
     return (
-      <SpacesShell {...shell}>
+      <SpacesShell {...shell} active="bookings">
         <MyBookings bookings={bookings} onCancel={cancelBooking} />
       </SpacesShell>
     );
