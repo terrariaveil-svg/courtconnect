@@ -186,7 +186,7 @@ export default function VenueDetail({
     <div className="vd-page">
       {/* Top bar */}
       <header className="vd-nav">
-        <button type="button" className="vd-brand" onClick={onBack} aria-label="Back to available spaces">
+        <button type="button" className="vd-brand" onClick={onBack} aria-label="Back to home">
           <img src={logo} alt="" className="vd-logo" />
           <span>PLAYR</span>
         </button>
@@ -232,7 +232,7 @@ export default function VenueDetail({
 
       <main className="vd-main">
         <button type="button" className="vd-back" onClick={onBack}>
-          ‹ Back to Available Spaces
+          ‹ Back to Home
         </button>
 
         <div className="vd-grid">
@@ -253,7 +253,7 @@ export default function VenueDetail({
               </span>
               <span className="vd-location">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <path d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.500a2.500 2.500 0 0 1 0 5z" />
+                  <path d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" />
                 </svg>
                 {facility.location}
               </span>
