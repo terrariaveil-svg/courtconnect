@@ -1,29 +1,37 @@
-VenueDetail.tsximport { useState } from 'react';
-import './ui.css';
+import { useEffect, useState } from 'react';
 import './VenueDetail.css';
-import AppNav from './AppNav';
-import CalendarPicker from './CalendarPicker';
-import type { AppBooking, NavProps } from './appTypes';
-import { SLOT_HOURS } from './venues';
-import type { Venue } from './venues';
-import { fmtHour, slotState, todayISO } from './appUtils';
-
-export type RentSelection = { venue: Venue; date: string; startHour: number };
+import logo from '../assets/courtconnect-logo.png';
+import type { Facility } from './AvailableSpaces';
+import type { Booking } from './BookingForm';
+import { NotifBadge } from './NotifAlerts';
 
 type VenueDetailProps = {
-  nav: NavProps;
-  pool: Venue[];
-  startId?: number;
-  bookings: AppBooking[];
-  onRent: (selection: RentSelection) => void;
+  facility: Facility;
+  userName?: string;
+  unreadCount: number;
+  onBack: () => void;
+  onOpenProfile: () => void;
+  onOpenBookings: () => void;
+  onRent: (booking: Booking) => void;
 };
+
+const SLOTS = [
+  '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM',
+  '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM',
+  '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM',
+];
+
+const EXTRA_IMAGES = [
+  'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1400&q=80',
+  'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1400&q=80',
+];
 
 type AmenityIconName = 'grid' | 'snow' | 'shower' | 'parking' | 'wifi' | 'dumbbell' | 'pulse' | 'locker';
 
 type Amenity = { icon: AmenityIconName; title: string; text: string };
 
-const courtAmenities = (courts: number): Amenity[] => [
-  { icon: 'grid', title: `${courts} Court${courts === 1 ? '' : 's'}`, text: 'Professional courts' },
+const COURT_AMENITIES: Amenity[] = [
+  { icon: 'grid', title: '2 Courts', text: 'Professional indoor courts' },
   { icon: 'snow', title: 'Air Conditioned', text: 'Cool and comfortable' },
   { icon: 'shower', title: 'Shower Rooms', text: 'Clean and accessible' },
   { icon: 'parking', title: 'Parking Area', text: 'Secure parking space' },
@@ -37,6 +45,17 @@ const GYM_AMENITIES: Amenity[] = [
   { icon: 'locker', title: 'Lockers', text: 'Secure storage for your things' },
   { icon: 'wifi', title: 'Free Wi-Fi', text: 'Stay connected' },
 ];
+
+// "08:00 AM" -> "09:00 AM"
+function addHour(label: string): string {
+  const [time, period] = label.split(' ');
+  let h = parseInt(time.split(':')[0], 10) % 12;
+  if (period === 'PM') h += 12;
+  h = (h + 1) % 24;
+  const nextPeriod = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${String(h12).padStart(2, '0')}:00 ${nextPeriod}`;
+}
 
 function AmenityIcon({ name }: { name: AmenityIconName }) {
   const common = {
@@ -105,91 +124,160 @@ function AmenityIcon({ name }: { name: AmenityIconName }) {
   }
 }
 
-export default function VenueDetail({ nav, pool, startId, bookings, onRent }: VenueDetailProps) {
-  const initial = Math.max(0, pool.findIndex((v) => v.id === startId));
-  const [index, setIndex] = useState(initial);
-  const [date, setDate] = useState(todayISO());
-  const [slot, setSlot] = useState<number | null>(null);
+export default function VenueDetail({
+  facility,
+  userName = 'Alex',
+  unreadCount,
+  onBack,
+  onOpenProfile,
+  onOpenBookings,
+  onRent,
+}: VenueDetailProps) {
+  const [slot, setSlot] = useState(SLOTS[0]);
+  const [imageIndex, setImageIndex] = useState(0);
 
-  const venue = pool[index];
-  const today = todayISO();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
-  // The arrows move between spaces: the name, photo, price and slots all change
-  const go = (delta: number) => {
-    setIndex((i) => (i + delta + pool.length) % pool.length);
-    setSlot(null);
+  const isGym = facility.type === 'Gym floor';
+  const amenities = isGym ? GYM_AMENITIES : COURT_AMENITIES;
+
+  const baseOf = (url: string) => url.split('?')[0];
+  const images = [
+    facility.image,
+    ...EXTRA_IMAGES.filter((url) => baseOf(url) !== baseOf(facility.image)),
+  ];
+
+  const today = new Date();
+  const shortDate = today.toLocaleDateString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  });
+  const longDate = today.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  const about = isGym
+    ? `${facility.name} offers a premium gym floor experience for members of all levels. Our well-maintained equipment, clean facilities, and friendly environment make it the perfect place to train, build strength, and stay active.`
+    : `${facility.name} offers a premium indoor ${facility.type.toLowerCase()} experience for players of all levels. Our well-maintained courts, clean facilities, and friendly environment make it the perfect place to play, train, and enjoy the sport.`;
+
+  const tags = [facility.type, 'Indoor', 'For All Skill Levels', 'Friendly Community'];
+
+  const rent = () => {
+    onRent({
+      id: Date.now(),
+      facility,
+      date: longDate,
+      startTime: slot,
+      endTime: addHour(slot),
+      customer: 'Alex Wassabi',
+      status: 'Confirmed',
+    });
   };
 
-  const states = SLOT_HOURS.map((hour) => ({
-    hour,
-    state: slotState(venue.id, date, hour, bookings),
-  }));
-  const firstFree = states.find((s) => s.state === 'free')?.hour ?? null;
-  const chosen =
-    slot !== null && states.some((s) => s.hour === slot && s.state === 'free') ? slot : firstFree;
-
-  const amenities = venue.kind === 'gym' ? GYM_AMENITIES : courtAmenities(venue.courts);
+  const prev = () => setImageIndex((i) => (i - 1 + images.length) % images.length);
+  const next = () => setImageIndex((i) => (i + 1) % images.length);
 
   return (
-    <div className="app-page vd-page">
-      <AppNav {...nav} active="spaces" />
+    <div className="vd-page">
+      {/* Top bar */}
+      <header className="vd-nav">
+        <button type="button" className="vd-brand" onClick={onBack} aria-label="Back to available spaces">
+          <img src={logo} alt="" className="vd-logo" />
+          <span>PLAYR</span>
+        </button>
 
-      <main className="app-main vd-main">
-        <button type="button" className="app-crumb" onClick={nav.onHome}>
-          ‹ Back to Home
+        <nav className="vd-links" aria-label="Main">
+          <button type="button" className="vd-link is-active" onClick={onBack}>
+            Available Spaces
+          </button>
+          <span className="vd-link vd-link-muted">Events</span>
+          <button type="button" className="vd-link" onClick={onOpenBookings}>
+            My Bookings
+          </button>
+          <span className="vd-link vd-link-muted">About</span>
+        </nav>
+
+        <div className="vd-nav-right">
+          <label className="vd-search">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3.5-3.5" />
+            </svg>
+            <input type="text" placeholder="Search by venue, location or sport..." />
+          </label>
+
+          <span className="alert-wrap">
+            <span className="vd-bell" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9a6 6 0 1 1 12 0c0 6 2 7 2 7H4s2-1 2-7" />
+                <path d="M10 20a2 2 0 0 0 4 0" />
+              </svg>
+            </span>
+            <NotifBadge count={unreadCount} />
+          </span>
+
+          <button type="button" className="vd-user" onClick={onOpenProfile} aria-label="Open user info">
+            <span className="vd-avatar">{userName.charAt(0).toUpperCase()}</span>
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main className="vd-main">
+        <button type="button" className="vd-back" onClick={onBack}>
+          ‹ Back to Available Spaces
         </button>
 
         <div className="vd-grid">
           {/* Left column */}
-          <div className="vd-left" key={venue.id}>
+          <div className="vd-left">
             <span className="vd-badge">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 11l9-8 9 8M5 10v10h14V10" />
               </svg>
-              {venue.indoor ? 'Indoor' : 'Outdoor'}
+              Indoor
             </span>
 
-            <h1 className="vd-title">{venue.name}</h1>
+            <h1 className="vd-title">{facility.name}</h1>
 
             <div className="vd-meta">
               <span className="vd-rating">
-                <span className="vd-star">★</span> {venue.rating.toFixed(1)}{' '}
-                <span className="vd-reviews">({venue.reviews} reviews)</span>
+                <span className="vd-star">★</span> 4.8 <span className="vd-reviews">(124 reviews)</span>
               </span>
               <span className="vd-location">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <path d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" />
+                  <path d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.500a2.500 2.500 0 0 1 0 5z" />
                 </svg>
-                {venue.location}
+                {facility.location}
               </span>
             </div>
 
-            {/* Gallery: the arrows switch to the previous / next space */}
+            {/* Gallery */}
             <div className="vd-gallery">
-              <img src={venue.image} alt={venue.name} className="vd-gallery-img" />
+              <img src={images[imageIndex]} alt={facility.name} className="vd-gallery-img" />
 
-              <span className="vd-count">
-                {index + 1} / {pool.length}
-              </span>
-
-              <button type="button" className="vd-arrow vd-arrow-left" onClick={() => go(-1)} aria-label="Previous space">
+              <button type="button" className="vd-arrow vd-arrow-left" onClick={prev} aria-label="Previous photo">
                 ‹
               </button>
-              <button type="button" className="vd-arrow vd-arrow-right" onClick={() => go(1)} aria-label="Next space">
+              <button type="button" className="vd-arrow vd-arrow-right" onClick={next} aria-label="Next photo">
                 ›
               </button>
 
               <div className="vd-dots">
-                {pool.map((v, i) => (
+                {images.map((_, i) => (
                   <button
-                    key={v.id}
+                    key={i}
                     type="button"
-                    className={`vd-dot${i === index ? ' is-active' : ''}`}
-                    onClick={() => {
-                      setIndex(i);
-                      setSlot(null);
-                    }}
-                    aria-label={`Show ${v.name}`}
+                    className={`vd-dot${i === imageIndex ? ' is-active' : ''}`}
+                    onClick={() => setImageIndex(i)}
+                    aria-label={`Show photo ${i + 1}`}
                   />
                 ))}
               </div>
@@ -213,9 +301,9 @@ export default function VenueDetail({ nav, pool, startId, bookings, onRent }: Ve
             {/* About */}
             <section className="vd-about">
               <h2>About This Venue</h2>
-              <p>{venue.about}</p>
+              <p>{about}</p>
               <div className="vd-tags">
-                {venue.tags.map((tag) => (
+                {tags.map((tag) => (
                   <span className="vd-tag" key={tag}>
                     {tag}
                   </span>
@@ -228,18 +316,17 @@ export default function VenueDetail({ nav, pool, startId, bookings, onRent }: Ve
           <aside className="vd-summary" aria-label="Booking summary">
             <h2 className="vd-summary-title">Booking Summary</h2>
 
-            <div className="vd-venue" key={`sum-${venue.id}`}>
-              <img src={venue.image} alt="" className="vd-venue-img" />
+            <div className="vd-venue">
+              <img src={facility.image} alt="" className="vd-venue-img" />
               <div className="vd-venue-info">
-                <strong>{venue.name}</strong>
+                <strong>{facility.name}</strong>
                 <span className="vd-venue-rating">
-                  <span className="vd-star">★</span> {venue.rating.toFixed(1)}{' '}
-                  <span className="vd-reviews">({venue.reviews} reviews)</span>
+                  <span className="vd-star">★</span> 4.8 <span className="vd-reviews">(124 reviews)</span>
                 </span>
-                <span className="vd-badge vd-badge-small">{venue.indoor ? 'Indoor' : 'Outdoor'}</span>
+                <span className="vd-badge vd-badge-small">Indoor</span>
                 <span className="vd-venue-loc">
                   <i className="vd-venue-dot" />
-                  {venue.location}
+                  {facility.location}
                 </span>
               </div>
             </div>
@@ -247,35 +334,27 @@ export default function VenueDetail({ nav, pool, startId, bookings, onRent }: Ve
             <div className="vd-divider" />
 
             <div className="vd-slots-head">
-              <strong>{date === today ? 'Today’s Open Slots' : 'Open Slots'}</strong>
-              <CalendarPicker
-                value={date}
-                min={today}
-                align="right"
-                className="vd-date-btn"
-                ariaLabel="Choose a date"
-                onChange={(iso) => {
-                  if (iso) {
-                    setDate(iso);
-                    setSlot(null);
-                  }
-                }}
-              />
+              <strong>Today’s Open Slots</strong>
+              <span className="vd-slots-date">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="5" width="18" height="16" rx="2" />
+                  <path d="M3 10h18M8 3v4M16 3v4" />
+                </svg>
+                {shortDate}
+              </span>
             </div>
 
             <div className="vd-slots" role="radiogroup" aria-label="Open time slots">
-              {states.map(({ hour, state }) => (
+              {SLOTS.map((s) => (
                 <button
-                  key={hour}
+                  key={s}
                   type="button"
                   role="radio"
-                  aria-checked={chosen === hour}
-                  disabled={state !== 'free'}
-                  title={state === 'booked' ? 'Already booked' : state === 'past' ? 'Time has passed' : undefined}
-                  className={`vd-slot${chosen === hour ? ' is-selected' : ''}`}
-                  onClick={() => setSlot(hour)}
+                  aria-checked={slot === s}
+                  className={`vd-slot${slot === s ? ' is-selected' : ''}`}
+                  onClick={() => setSlot(s)}
                 >
-                  {fmtHour(hour)}
+                  {s}
                 </button>
               ))}
             </div>
@@ -286,25 +365,16 @@ export default function VenueDetail({ nav, pool, startId, bookings, onRent }: Ve
               <span className="vd-price-icon">$</span>
               <span className="vd-price-label">Price per Hour</span>
               <div className="vd-price-value">
-                <strong>₱{venue.price}</strong>
+                <strong>₱{facility.price}</strong>
                 <span>/ hour</span>
               </div>
             </div>
 
             <p className="vd-selected">
-              {chosen !== null
-                ? `Selected: ${fmtHour(chosen)} – ${fmtHour(chosen + 1)}`
-                : 'No open slots on this date. Pick another day.'}
+              Selected: {slot} – {addHour(slot)}
             </p>
 
-            <button
-              type="button"
-              className="vd-rent"
-              disabled={chosen === null}
-              onClick={() => {
-                if (chosen !== null) onRent({ venue, date, startHour: chosen });
-              }}
-            >
+            <button type="button" className="vd-rent" onClick={rent}>
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="5" width="18" height="16" rx="2" />
                 <path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4" />
