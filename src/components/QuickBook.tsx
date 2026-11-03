@@ -5,7 +5,7 @@ export type SpaceChoice = 'court' | 'gym';
 
 type QuickBookProps = {
   onClose: () => void;
-  onShowSpaces?: (choice: SpaceChoice) => void;
+  onShowSpaces: (choice: SpaceChoice) => void;
 };
 
 type Option = {
@@ -102,7 +102,7 @@ export default function QuickBook({ onClose, onShowSpaces }: QuickBookProps) {
         <button
           type="button"
           className="qb-show"
-          onClick={() => onShowSpaces?.(choice)}
+          onClick={() => onShowSpaces(choice)}
         >
           Show available Space
         </button>

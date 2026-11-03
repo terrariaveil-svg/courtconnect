@@ -13,6 +13,7 @@ type SpacesShellProps = {
   onOpenBookings: () => void;
   onOpenSpaces?: () => void;
   onOpenEvents?: () => void;
+  onOpenNotifications: () => void;
   children: ReactNode;
 };
 
@@ -26,6 +27,7 @@ export default function SpacesShell({
   onOpenBookings,
   onOpenSpaces,
   onOpenEvents,
+  onOpenNotifications,
   children,
 }: SpacesShellProps) {
   return (
@@ -40,6 +42,7 @@ export default function SpacesShell({
         onOpenBookings={onOpenBookings}
         onOpenSpaces={onOpenSpaces}
         onOpenEvents={onOpenEvents}
+        onOpenNotifications={onOpenNotifications}
       />
 
       <div className="sp-main">{children}</div>

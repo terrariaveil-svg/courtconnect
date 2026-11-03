@@ -14,6 +14,7 @@ type VenueDetailProps = {
   onOpenBookings: () => void;
   onOpenSpaces?: () => void;
   onOpenEvents?: () => void;
+  onOpenNotifications?: () => void;
   onRent: (booking: Booking) => void;
 };
 
@@ -136,6 +137,7 @@ export default function VenueDetail({
   onOpenBookings,
   onOpenSpaces,
   onOpenEvents,
+  onOpenNotifications,
   onRent,
 }: VenueDetailProps) {
   const [slot, setSlot] = useState(SLOTS[0]);
@@ -199,6 +201,7 @@ export default function VenueDetail({
         onOpenBookings={onOpenBookings}
         onOpenSpaces={onOpenSpaces}
         onOpenEvents={onOpenEvents}
+        onOpenNotifications={onOpenNotifications}
       />
 
       <main className="vd-main">

@@ -5,10 +5,11 @@ import type { SportEvent } from './Events';
 type EventsScreenProps = {
   events: SportEvent[];
   onOpenEvent: (id: number) => void;
+  onRegister: (event: SportEvent) => void;
 };
 
 // Shows your friend's events list and makes each "View Event" button open that event
-export default function EventsScreen({ events, onOpenEvent }: EventsScreenProps) {
+export default function EventsScreen({ events, onOpenEvent, onRegister }: EventsScreenProps) {
   const handleClick = (e: MouseEvent<HTMLDivElement>) => {
     const target = e.target;
     if (!(target instanceof Element)) return;
@@ -24,7 +25,7 @@ export default function EventsScreen({ events, onOpenEvent }: EventsScreenProps)
 
   return (
     <div onClick={handleClick}>
-      <Events events={events} />
+      <Events events={events} onRegister={onRegister} />
     </div>
   );
 }

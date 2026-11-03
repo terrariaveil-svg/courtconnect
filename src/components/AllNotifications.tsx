@@ -33,6 +33,7 @@ export default function AllNotifications({
 }: AllNotificationsProps) {
   const [tab, setTab] = useState<Tab>('all');
   const [query, setQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
   const [sort, setSort] = useState<Sort>('newest');
   const [page, setPage] = useState(1);
 
@@ -43,6 +44,7 @@ export default function AllNotifications({
     .filter((n) => {
       if (tab === 'unread' && !n.unread) return false;
       if (tab === 'read' && n.unread) return false;
+      if (dateFilter && n.date !== dateFilter) return false;
       if (!q) return true;
       return `${n.title} ${n.text} ${n.type} ${n.day}`.toLowerCase().includes(q);
     })
@@ -178,6 +180,29 @@ export default function AllNotifications({
                   <path d="M20 20l-3.5-3.5" />
                 </svg>
               </label>
+
+              <input
+                className="all-date-filter"
+                type="date"
+                value={dateFilter}
+                aria-label="Filter notifications by date"
+                onChange={(e) => {
+                  setDateFilter(e.target.value);
+                  setPage(1);
+                }}
+              />
+              {dateFilter && (
+                <button
+                  type="button"
+                  className="all-clear-date"
+                  onClick={() => {
+                    setDateFilter('');
+                    setPage(1);
+                  }}
+                >
+                  Clear date
+                </button>
+              )}
 
               <select
                 className="all-sort"

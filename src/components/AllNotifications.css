@@ -268,6 +268,33 @@
   font-family: inherit;
 }
 
+.all-date-filter {
+  height: 28px;
+  max-width: 150px;
+  padding: 0 8px;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f3d1e;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.all-clear-date {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0f3d1e;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.all-clear-date:hover {
+  text-decoration: underline;
+}
+
 .all-sort {
   height: 28px;
   padding: 0 6px;

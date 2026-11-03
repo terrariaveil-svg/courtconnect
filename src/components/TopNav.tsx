@@ -12,6 +12,7 @@ type TopNavProps = {
   onOpenBookings: () => void;
   onOpenSpaces?: () => void;
   onOpenEvents?: () => void;
+  onOpenNotifications?: () => void;
 };
 
 export default function TopNav({
@@ -24,6 +25,7 @@ export default function TopNav({
   onOpenBookings,
   onOpenSpaces,
   onOpenEvents,
+  onOpenNotifications,
 }: TopNavProps) {
   const go = (action?: () => void) => () => {
     window.scrollTo(0, 0);
@@ -71,7 +73,12 @@ export default function TopNav({
           <input type="text" placeholder="Search by venue, location or sport..." />
         </label>
 
-        <span className="alert-wrap">
+        <button
+          type="button"
+          className="alert-wrap tn-notifications"
+          onClick={go(onOpenNotifications)}
+          aria-label={`Open notifications${unreadCount ? `, ${unreadCount} unread` : ''}`}
+        >
           <span className="tn-bell" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M6 9a6 6 0 1 1 12 0c0 6 2 7 2 7H4s2-1 2-7" />
@@ -79,7 +86,7 @@ export default function TopNav({
             </svg>
           </span>
           <NotifBadge count={unreadCount} />
-        </span>
+        </button>
 
         <button type="button" className="tn-user" onClick={onOpenProfile} aria-label="Open user info">
           <span className="tn-avatar">{userName.charAt(0).toUpperCase()}</span>

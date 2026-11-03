@@ -68,15 +68,16 @@ export default function LoginGate() {
     setReminders([]);
   };
 
-  const pushNotice = (title: string, text: string, day: string, time: string) => {
+  const pushNotice = (title: string, text: string, date: string, time: string) => {
     setNotices((list) => [
       {
         id: Math.max(0, ...list.map((n) => n.id)) + 1,
         order: Math.min(0, ...list.map((n) => n.order)) - 1,
+        date,
         icon: 'calendar',
         title,
         text,
-        day,
+        day: relDay(date),
         time,
         type: 'Confirmation',
         unread: true,
@@ -141,7 +142,7 @@ export default function LoginGate() {
       pushNotice(
         `Registered: ${event.name}`,
         `You reserved ${spots} spot${spots === 1 ? '' : 's'} for ${event.name} at ${event.venue}.`,
-        relDay(event.date),
+        event.date,
         event.time,
       );
     }
@@ -164,6 +165,7 @@ export default function LoginGate() {
     onOpenBookings: () => setScreen('mybookings'),
     onOpenSpaces: () => setScreen('spaces'),
     onOpenEvents: () => setScreen('events'),
+    onOpenNotifications: () => setScreen('notifications'),
   };
 
   const currentEvent = events.find((e) => e.id === eventId);
@@ -290,6 +292,8 @@ export default function LoginGate() {
 
   return (
     <HomePage
+      bookings={bookings}
+      registeredEvents={events.filter((event) => registrations[event.id] > 0)}
       unreadCount={unreadCount}
       showUnreadAlert={toastOpen}
       onCloseUnreadAlert={() => setToastOpen(false)}

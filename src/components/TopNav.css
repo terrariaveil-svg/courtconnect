@@ -139,6 +139,18 @@
   color: #10253a;
 }
 
+.tn-notifications {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.tn-notifications:focus-visible {
+  outline: 3px solid #8bd9b5;
+  outline-offset: 3px;
+}
+
 .tn-user {
   display: flex;
   align-items: center;

@@ -15,6 +15,7 @@ type SpacesPageProps = {
   onOpenBookings: () => void;
   onOpenSpaces: () => void;
   onOpenEvents: () => void;
+  onOpenNotifications: () => void;
 };
 
 export default function SpacesPage({
@@ -28,6 +29,7 @@ export default function SpacesPage({
   onOpenBookings,
   onOpenSpaces,
   onOpenEvents,
+  onOpenNotifications,
 }: SpacesPageProps) {
   // Court -> first court, Gym floor -> first gym space
   const facility = spacesFor(choice)[0];
@@ -44,6 +46,7 @@ export default function SpacesPage({
       onOpenBookings={onOpenBookings}
       onOpenSpaces={onOpenSpaces}
       onOpenEvents={onOpenEvents}
+      onOpenNotifications={onOpenNotifications}
       onRent={onBooked}
     />
   );
