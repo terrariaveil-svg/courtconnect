@@ -10,6 +10,8 @@ import BookingConfirmed from "./components/BookingConfirmed";
 import MyBookings from "./components/MyBookings";
 import Notifications from "./components/Notifications";
 import Footer from "./components/Footer";
+import UserInfo from "./components/UserInfo";
+import { GYMS } from "./components/spacesData";
 import "./App.css";
 
 const facilities: Facility[] = [
@@ -85,6 +87,7 @@ export default function App() {
 
   const [page, setPage] = useState("Home");
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [registeredEvents, setRegisteredEvents] = useState<SportEvent[]>([]);
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
   const [lastBooking, setLastBooking] = useState<Booking | null>(null);
   const [search, setSearch] = useState("");
@@ -101,7 +104,24 @@ export default function App() {
   }
 
   function cancelBooking(id: number) {
-    setBookings((previous) => previous.filter((booking) => booking.id !== id));
+    setBookings((previous) =>
+      previous.filter((booking) => booking.id !== id)
+    );
+  }
+
+  // EVENT REGISTRATION
+  function registerEvent(event: SportEvent) {
+    const alreadyRegistered = registeredEvents.some(
+      (item) => item.id === event.id
+    );
+
+    if (alreadyRegistered) {
+      window.alert("You are already registered for this event!");
+      return;
+    }
+
+    setRegisteredEvents((previous) => [...previous, event]);
+    window.alert(`Successfully registered for ${event.name}!`);
   }
 
   function handleLogin(event: FormEvent<HTMLFormElement>) {
@@ -109,7 +129,7 @@ export default function App() {
     setLoggedIn(true);
   }
 
-  const filteredFacilities = facilities.filter((facility) =>
+  const filteredFacilities = [...facilities, ...GYMS].filter((facility) =>
     `${facility.name} ${facility.type} ${facility.location}`
       .toLowerCase()
       .includes(search.toLowerCase())
@@ -131,12 +151,10 @@ export default function App() {
             padding: 24px;
             font-family: Arial, Helvetica, sans-serif;
           }
-
           .playr-login-container {
             width: 100%;
             max-width: 390px;
           }
-
           .playr-login-logo {
             display: flex;
             align-items: center;
@@ -145,7 +163,6 @@ export default function App() {
             font-weight: bold;
             margin-bottom: 10px;
           }
-
           .playr-login-icon {
             width: 20px;
             height: 20px;
@@ -156,27 +173,23 @@ export default function App() {
             justify-content: center;
             flex-shrink: 0;
           }
-
           .playr-login-label {
             color: #b85a00;
             font-size: 12px;
             margin: 0 0 8px 26px;
           }
-
           .playr-login-container h1 {
             font-size: 22px;
             font-weight: 700;
             margin: 0 0 6px 23px;
             color: #111;
           }
-
           .playr-login-description {
             font-size: 12px;
             line-height: 1.5;
             margin: 0 0 14px 20px;
             color: #111;
           }
-
           .playr-login-form {
             min-height: 193px;
             border: 1px solid #d8d8d8;
@@ -186,13 +199,11 @@ export default function App() {
             display: flex;
             flex-direction: column;
           }
-
           .playr-login-form label {
             font-size: 10px;
             margin-bottom: 4px;
             color: #111;
           }
-
           .playr-login-form input {
             width: 100%;
             height: 19px;
@@ -205,11 +216,9 @@ export default function App() {
             margin-bottom: 10px;
             color: #111;
           }
-
           .playr-login-form input::placeholder {
             color: #b5b5b5;
           }
-
           .playr-login-submit {
             height: 20px;
             background: #292929;
@@ -220,7 +229,6 @@ export default function App() {
             cursor: pointer;
             margin-bottom: 10px;
           }
-
           .playr-login-forgot {
             align-self: flex-start;
             padding: 0;
@@ -231,7 +239,6 @@ export default function App() {
             font-size: 10px;
             cursor: pointer;
           }
-
           @media (max-width: 480px) {
             .playr-login-page {
               padding: 20px;
@@ -262,9 +269,7 @@ export default function App() {
           </div>
 
           <div className="playr-login-label">MEMBER ACCESS</div>
-
           <h1>Welcome back.</h1>
-
           <p className="playr-login-description">
             Sign in to manage your bookings and check club availability.
           </p>
@@ -321,17 +326,29 @@ export default function App() {
         {page === "Home" && (
           <>
             <Hero
+              bookings={bookings}
+              registeredEvents={registeredEvents}
               onExplore={() => setPage("Facilities")}
               onEvents={() => setPage("Events")}
+              onSignOut={() => setLoggedIn(false)}
+              onOpenProfile={() => setPage("Profile")}
+              onShowSpaces={(choice) => {
+                setSearch(choice === "gym" ? "Gym floor" : "");
+                setPage("Facilities");
+              }}
             />
+
             <Featured
               facilities={facilities}
               onBook={openBooking}
               onViewAll={() => setPage("Facilities")}
             />
+
             <section className="home-cta">
               <h2>Ready for your next game?</h2>
-              <p>Find a facility, choose your schedule, and reserve your space.</p>
+              <p>
+                Find a facility, choose your schedule, and reserve your space.
+              </p>
               <button
                 className="button button-primary"
                 onClick={() => setPage("Facilities")}
@@ -342,6 +359,10 @@ export default function App() {
           </>
         )}
 
+        {page === "Profile" && (
+          <UserInfo onHome={() => setPage("Home")} />
+        )}
+
         {page === "Facilities" && (
           <section className="page-section">
             <span className="eyebrow">EXPLORE OUR SPACES</span>
@@ -349,12 +370,14 @@ export default function App() {
             <p className="section-intro">
               Find the right space for your next match or training session.
             </p>
+
             <input
               className="search-input"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search facilities, sports, or location..."
             />
+
             {filteredFacilities.length === 0 ? (
               <div className="empty-state">
                 <h3>No facilities found</h3>
@@ -374,13 +397,23 @@ export default function App() {
           </section>
         )}
 
-        {page === "Events" && <Events events={events} />}
-
-        {page === "My Bookings" && (
-          <MyBookings bookings={bookings} onCancel={cancelBooking} />
+        {page === "Events" && (
+          <Events
+            events={events}
+            onRegister={registerEvent}
+          />
         )}
 
-        {page === "Notifications" && <Notifications bookings={bookings} />}
+        {page === "My Bookings" && (
+          <MyBookings
+            bookings={bookings}
+            onCancel={cancelBooking}
+          />
+        )}
+
+        {page === "Notifications" && (
+          <Notifications bookings={bookings} />
+        )}
 
         {page === "Confirmation" && lastBooking && (
           <BookingConfirmed

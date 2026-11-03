@@ -1,5 +1,5 @@
 
-import { CalendarDays, MapPin } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 
 export interface SportEvent {
   id: number;
@@ -10,48 +10,64 @@ export interface SportEvent {
   image: string;
 }
 
-interface Props {
+interface EventsProps {
   events: SportEvent[];
+  onRegister: (event: SportEvent) => void;
 }
 
-export default function Events({ events }: Props) {
+export default function Events({
+  events = [],
+  onRegister,
+}: EventsProps) {
   return (
-    <section className="page-section">
-      <span className="eyebrow">PLAY TOGETHER</span>
-      <h2>Upcoming Sports Events</h2>
-      <p className="section-intro">
-        Discover local games, tournaments, and activities.
-      </p>
+    <section className="events-section">
+      <div className="events-header">
+        <div>
+          <h2>Upcoming Events</h2>
+          <p>Discover and join upcoming sports events.</p>
+        </div>
+      </div>
 
-      <div className="facility-grid">
-        {events.map((event) => (
-          <article className="facility-card" key={event.id}>
-            <div className="facility-image-wrap">
-              <img className="facility-image" src={event.image} alt={event.name} />
-              <span className="image-tag">{event.category}</span>
-            </div>
-            <div className="facility-content">
-              <h3>{event.name}</h3>
-              <p className="location-line">
-                <CalendarDays size={16} /> {event.date}
-              </p>
-              <p className="location-line">
-                <MapPin size={16} /> CourtConnect Sports Complex
-              </p>
-              <div className="facility-footer">
-                <strong className="price">
-                  {event.price === 0 ? "Free" : `₱${event.price.toLocaleString()}`}
-                </strong>
+      <div className="events-grid">
+        {events.length === 0 ? (
+          <p>No upcoming events available.</p>
+        ) : (
+          events.map((event) => (
+            <div className="event-card" key={event.id}>
+              <img
+                src={event.image}
+                alt={event.name}
+                className="event-image"
+              />
+
+              <div className="event-content">
+                <span className="event-category">
+                  {event.category}
+                </span>
+
+                <h3>{event.name}</h3>
+
+                <p className="event-date">
+                  <CalendarDays size={16} />
+                  {event.date}
+                </p>
+
+                <p className="event-price">
+                  {event.price === 0
+                    ? "Free"
+                    : `₱${event.price.toLocaleString()}`}
+                </p>
+
                 <button
-                  className="button button-primary button-small"
-                  onClick={() => window.alert(`You selected ${event.name}. Event registration can be connected next.`)}
+                  className="register-button"
+                  onClick={() => onRegister(event)}
                 >
-                  View Event
+                  Register
                 </button>
               </div>
             </div>
-          </article>
-        ))}
+          ))
+        )}
       </div>
     </section>
   );
