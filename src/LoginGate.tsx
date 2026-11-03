@@ -11,10 +11,10 @@ import SpacesShell from './components/SpacesShell';
 import SpacesPage from './components/SpacesPage';
 import BookingConfirmed from './components/BookingConfirmed';
 import MyBookings from './components/MyBookings';
-import EventsScreen from './components/EventsScreen';
+import DiscoverEvents from './components/DiscoverEvents';
 import EventDetail from './components/EventDetail';
-import { EVENTS } from './components/eventsList';
-import { infoFor } from './components/eventDetails';
+import { makeEvent, relDay, seedEvents } from './components/eventsList';
+import type { ClubEvent, NewEvent } from './components/eventsList';
 import type { Booking } from './components/BookingForm';
 import type { SpaceChoice } from './components/QuickBook';
 import { INITIAL_NOTICES } from './components/notificationsData';
@@ -49,7 +49,8 @@ export default function LoginGate() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [lastBooking, setLastBooking] = useState<Booking | null>(null);
 
-  // Events: which one is open, and the spots you reserved (event id -> spots)
+  // Events: the list, which one is open, and the spots you reserved (event id -> spots)
+  const [events, setEvents] = useState<ClubEvent[]>(() => seedEvents());
   const [eventId, setEventId] = useState<number | null>(null);
   const [registrations, setRegistrations] = useState<Record<number, number>>({});
 
@@ -100,6 +101,7 @@ export default function LoginGate() {
     setReminders(INITIAL_REMINDERS);
     setBookings([]);
     setLastBooking(null);
+    setEvents(seedEvents());
     setRegistrations({});
     setEventId(null);
     setToastOpen(false);
@@ -122,21 +124,25 @@ export default function LoginGate() {
     setBookings((list) => list.filter((b) => b.id !== id));
   };
 
-  // Events -> "View Event"
+  // Events
   const openEvent = (id: number) => {
     setEventId(id);
     setScreen('event');
   };
 
+  const createEvent = (data: NewEvent) => {
+    setEvents((list) => [makeEvent(Math.max(0, ...list.map((e) => e.id)) + 1, data), ...list]);
+  };
+
   const registerForEvent = (id: number, spots: number) => {
     setRegistrations((prev) => ({ ...prev, [id]: spots }));
-    const event = EVENTS.find((e) => e.id === id);
+    const event = events.find((e) => e.id === id);
     if (event) {
       pushNotice(
         `Registered: ${event.name}`,
-        `You reserved ${spots} spot${spots === 1 ? '' : 's'} for ${event.name} on ${event.date}.`,
-        event.date,
-        infoFor(id).time,
+        `You reserved ${spots} spot${spots === 1 ? '' : 's'} for ${event.name} at ${event.venue}.`,
+        relDay(event.date),
+        event.time,
       );
     }
   };
@@ -160,7 +166,7 @@ export default function LoginGate() {
     onOpenEvents: () => setScreen('events'),
   };
 
-  const currentEvent = EVENTS.find((e) => e.id === eventId);
+  const currentEvent = events.find((e) => e.id === eventId);
 
   if (screen === 'loading') {
     return <LoadingScreen onDone={finishLoading} />;
@@ -195,7 +201,7 @@ export default function LoginGate() {
         <EventDetail
           key={currentEvent.id}
           event={currentEvent}
-          others={EVENTS.filter((e) => e.id !== currentEvent.id)}
+          others={events.filter((e) => e.id !== currentEvent.id)}
           tickets={registrations[currentEvent.id] ?? 0}
           onBack={() => setScreen('events')}
           onRegister={registerForEvent}
@@ -209,9 +215,12 @@ export default function LoginGate() {
   if (screen === 'events' || screen === 'event') {
     return (
       <SpacesShell {...shell} active="events">
-        <div className="sp-content">
-          <EventsScreen events={EVENTS} onOpenEvent={openEvent} />
-        </div>
+        <DiscoverEvents
+          events={events}
+          registrations={registrations}
+          onOpenEvent={openEvent}
+          onCreate={createEvent}
+        />
       </SpacesShell>
     );
   }

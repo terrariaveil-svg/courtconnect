@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import './EventDetail.css';
-import type { SportEvent } from './Events';
-import { infoFor } from './eventDetails';
+import type { ClubEvent } from './eventsList';
+import { fmtFull } from './eventsList';
+import { extrasFor } from './eventDetails';
 
 type EventDetailProps = {
-  event: SportEvent;
-  others: SportEvent[];
+  event: ClubEvent;
+  others: ClubEvent[];
   tickets: number; // 0 when you are not registered
   onBack: () => void;
   onRegister: (id: number, tickets: number) => void;
@@ -24,7 +25,7 @@ export default function EventDetail({
   onCancel,
   onOpenEvent,
 }: EventDetailProps) {
-  const info = infoFor(event.id);
+  const extras = extrasFor(event.category);
   const [count, setCount] = useState(1);
   const [confirmCancel, setConfirmCancel] = useState(false);
 
@@ -33,10 +34,10 @@ export default function EventDetail({
   }, []);
 
   const registered = tickets > 0;
-  const spotsLeft = Math.max(0, info.spotsLeft - tickets);
+  const spotsLeft = Math.max(0, event.spotsLeft - tickets);
   const maxTickets = Math.max(1, Math.min(4, spotsLeft));
   const spots = Math.min(count, maxTickets);
-  const percentFull = Math.round(((info.capacity - spotsLeft) / info.capacity) * 100);
+  const percentFull = Math.round(((event.capacity - spotsLeft) / event.capacity) * 100);
   const total = event.price * (registered ? tickets : spots);
   const code = `CC-EV-${String(event.id).padStart(3, '0')}`;
 
@@ -62,36 +63,36 @@ export default function EventDetail({
                 <rect x="3" y="5" width="18" height="16" rx="2" />
                 <path d="M3 10h18M8 3v4M16 3v4" />
               </svg>
-              {event.date}
+              {fmtFull(event.date)}
             </li>
             <li>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 7v5l3 2" />
               </svg>
-              {info.time}
+              {event.time}
             </li>
             <li>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z" />
                 <circle cx="12" cy="9" r="2.5" />
               </svg>
-              {info.location}
+              {event.venue} · {event.city}
             </li>
           </ul>
 
           <section className="ed-card">
             <h2>About this event</h2>
-            <p>{info.about}</p>
+            <p>{event.description}</p>
             <p className="ed-organizer">
-              Organized by <strong>{info.organizer}</strong>
+              Organized by <strong>{event.organizer}</strong>
             </p>
           </section>
 
           <section className="ed-card">
             <h2>Schedule</h2>
             <ol className="ed-schedule">
-              {info.schedule.map((item) => (
+              {extras.schedule.map((item) => (
                 <li key={item.time}>
                   <span className="ed-time">{item.time}</span>
                   <span>{item.label}</span>
@@ -103,7 +104,7 @@ export default function EventDetail({
           <section className="ed-card">
             <h2>What to bring</h2>
             <div className="ed-chips">
-              {info.bring.map((item) => (
+              {extras.bring.map((item) => (
                 <span className="ed-chip" key={item}>
                   {item}
                 </span>
@@ -228,7 +229,7 @@ export default function EventDetail({
                 <span>
                   <strong>{o.name}</strong>
                   <small>
-                    {o.date} · {priceText(o.price)}
+                    {fmtFull(o.date)} · {priceText(o.price)}
                   </small>
                 </span>
               </button>

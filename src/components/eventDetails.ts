@@ -1,80 +1,47 @@
-export type EventInfo = {
-  time: string;
-  location: string;
-  organizer: string;
-  capacity: number;
-  spotsLeft: number;
-  about: string;
+import type { EventCategory } from './eventsList';
+
+export type EventExtras = {
   schedule: { time: string; label: string }[];
   bring: string[];
 };
 
-const DEFAULT_INFO: EventInfo = {
-  time: '9:00 AM – 12:00 PM',
-  location: 'CourtConnect Sports Complex, Kidapawan City',
-  organizer: 'CourtConnect Events Team',
-  capacity: 40,
-  spotsLeft: 20,
-  about: 'Join other players for a fun, friendly day of sports. Everyone is welcome, whatever your level.',
-  schedule: [
-    { time: '8:30 AM', label: 'Check-in opens' },
-    { time: '9:00 AM', label: 'Warm-up' },
-    { time: '9:30 AM', label: 'Games begin' },
-    { time: '12:00 PM', label: 'Wrap-up and awards' },
-  ],
-  bring: ['Water bottle', 'Towel', 'Sports shoes', 'Valid ID'],
-};
-
-export const EVENT_INFO: Record<number, EventInfo> = {
-  1: {
-    time: '8:00 AM – 5:00 PM',
-    location: 'CourtConnect Sports Complex, Kidapawan City',
-    organizer: 'Kidapawan Basketball League',
-    capacity: 80,
-    spotsLeft: 32,
-    about:
-      'The Community Basketball Tournament brings teams from around the city together for a full day of games. Teams are grouped by level, so every match is a fair fight. Register as a player and we will place you on a team if you do not have one yet.',
+const EXTRAS: Record<EventCategory, EventExtras> = {
+  Badminton: {
     schedule: [
-      { time: '8:00 AM', label: 'Team check-in and briefing' },
-      { time: '9:00 AM', label: 'Group stage games' },
-      { time: '1:00 PM', label: 'Lunch break' },
-      { time: '2:00 PM', label: 'Semi-finals' },
-      { time: '4:00 PM', label: 'Championship game and awards' },
-    ],
-    bring: ['Team jersey', 'Basketball shoes', 'Water bottle', 'Valid ID'],
-  },
-  2: {
-    time: '3:00 PM – 6:00 PM',
-    location: 'CourtConnect Sports Complex, Kidapawan City',
-    organizer: 'CourtConnect Events Team',
-    capacity: 40,
-    spotsLeft: 14,
-    about:
-      'A free, relaxed volleyball afternoon. Teams are mixed on the spot so you can meet new people and play a few quick matches. Nets and balls are provided.',
-    schedule: [
-      { time: '2:30 PM', label: 'Sign-in and team mixing' },
-      { time: '3:00 PM', label: 'Round-robin matches' },
-      { time: '5:00 PM', label: 'Friendly final' },
-      { time: '5:45 PM', label: 'Group photo' },
-    ],
-    bring: ['Knee pads (optional)', 'Water bottle', 'Sunscreen', 'Towel'],
-  },
-  3: {
-    time: '6:00 PM – 9:00 PM',
-    location: 'CourtConnect Sports Complex, Kidapawan City',
-    organizer: 'Rally Badminton Club',
-    capacity: 24,
-    spotsLeft: 9,
-    about:
-      'Open play for badminton lovers. Courts rotate every 20 minutes, so you will always get a game. Shuttlecocks are included. Bring your own racket.',
-    schedule: [
-      { time: '5:45 PM', label: 'Check-in' },
-      { time: '6:00 PM', label: 'Open play, round 1' },
-      { time: '7:15 PM', label: 'Open play, round 2' },
-      { time: '8:30 PM', label: 'Mini doubles challenge' },
+      { time: 'Arrive', label: 'Check-in opens 15 minutes early' },
+      { time: 'Warm-up', label: 'Light drills and court assignments' },
+      { time: 'Play', label: 'Matches with court rotations' },
+      { time: 'Wrap-up', label: 'Final games and thank-yous' },
     ],
     bring: ['Badminton racket', 'Indoor court shoes', 'Water bottle', 'Towel'],
   },
+  Basketball: {
+    schedule: [
+      { time: 'Arrive', label: 'Check-in and team placement' },
+      { time: 'Warm-up', label: 'Shootaround and quick briefing' },
+      { time: 'Play', label: 'Games, winners stay on' },
+      { time: 'Wrap-up', label: 'Final game and group photo' },
+    ],
+    bring: ['Basketball shoes', 'Water bottle', 'Towel', 'Valid ID'],
+  },
+  Fitness: {
+    schedule: [
+      { time: 'Arrive', label: 'Check-in and bib pick-up' },
+      { time: 'Warm-up', label: 'Stretching led by our host' },
+      { time: 'Go', label: 'The main activity begins' },
+      { time: 'Cool-down', label: 'Stretch, snacks and finisher photos' },
+    ],
+    bring: ['Running shoes', 'Water bottle', 'Sunscreen', 'Light towel'],
+  },
+  Tournament: {
+    schedule: [
+      { time: 'Arrive', label: 'Team check-in and briefing' },
+      { time: 'Round 1', label: 'Group stage games' },
+      { time: 'Finals', label: 'Semi-finals and championship' },
+      { time: 'Awards', label: 'Trophies and prizes' },
+    ],
+    bring: ['Team jersey', 'Sports shoes', 'Water bottle', 'Valid ID'],
+  },
 };
 
-export const infoFor = (id: number): EventInfo => EVENT_INFO[id] ?? DEFAULT_INFO;
+export const extrasFor = (category: EventCategory): EventExtras => EXTRAS[category];
