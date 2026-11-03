@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import VenueDetail from './VenueDetail';
 import type { Booking } from './BookingForm';
+import type { Facility } from './AvailableSpaces';
 import type { SpaceChoice } from './QuickBook';
 import { spacesFor } from './spacesData';
 
 type SpacesPageProps = {
   choice: SpaceChoice;
+  customCourts: Facility[];
   onChoiceChange: (choice: SpaceChoice) => void;
   onBooked: (booking: Booking) => void;
   userName?: string;
@@ -20,6 +23,7 @@ type SpacesPageProps = {
 
 export default function SpacesPage({
   choice,
+  customCourts,
   onBooked,
   userName,
   unreadCount,
@@ -31,13 +35,19 @@ export default function SpacesPage({
   onOpenEvents,
   onOpenNotifications,
 }: SpacesPageProps) {
-  // Court -> first court, Gym floor -> first gym space
-  const facility = spacesFor(choice)[0];
+  const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(null);
+  const facilities = [
+    ...spacesFor(choice),
+    ...(choice === 'court' ? customCourts : []),
+  ];
+  const facility = facilities.find((item) => item.id === selectedFacilityId) ?? facilities[0];
 
   return (
     <VenueDetail
       key={facility.id}
       facility={facility}
+      facilities={facilities}
+      onSelectFacility={setSelectedFacilityId}
       userName={userName}
       unreadCount={unreadCount}
       bookingCount={bookingCount}

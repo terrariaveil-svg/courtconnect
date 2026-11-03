@@ -18,6 +18,9 @@ import { makeEvent, relDay, seedEvents } from './components/eventsList';
 import type { ClubEvent, NewEvent } from './components/eventsList';
 import type { Booking } from './components/BookingForm';
 import type { ApprovalStatus } from './components/approval';
+import { findConfirmedBookingConflict } from './components/bookingAvailability';
+import type { Facility } from './components/AvailableSpaces';
+import { COURTS, GYMS } from './components/spacesData';
 import type { SpaceChoice } from './components/QuickBook';
 import { INITIAL_NOTICES } from './components/notificationsData';
 import type { Notice } from './components/notificationsData';
@@ -40,6 +43,41 @@ type Screen =
   | 'events'
   | 'event';
 
+function isFacilityList(value: unknown): value is Facility[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (court): court is Facility =>
+        typeof court === 'object' &&
+        court !== null &&
+        typeof court.id === 'number' &&
+        typeof court.name === 'string' &&
+        typeof court.type === 'string' &&
+        typeof court.location === 'string' &&
+        typeof court.price === 'number' &&
+        typeof court.image === 'string' &&
+        typeof court.description === 'string',
+    )
+  );
+}
+
+function loadCustomCourts(): { courts: Facility[]; error: string } {
+  try {
+    const savedCourts = window.localStorage.getItem('courtconnect.customCourts');
+    if (!savedCourts) return { courts: [], error: '' };
+
+    const parsed: unknown = JSON.parse(savedCourts);
+    if (!isFacilityList(parsed)) {
+      throw new Error('Saved court data is invalid.');
+    }
+
+    return { courts: parsed, error: '' };
+  } catch (error) {
+    console.error('Unable to load saved courts.', error);
+    return { courts: [], error: 'Saved courts could not be loaded from this device.' };
+  }
+}
+
 export default function LoginGate() {
   const adminEmail = 'admin@courtconnect.com';
   const adminPassword = 'admin123';
@@ -54,6 +92,8 @@ export default function LoginGate() {
   const [spaceChoice, setSpaceChoice] = useState<SpaceChoice>('court');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [lastBooking, setLastBooking] = useState<Booking | null>(null);
+  const [courtStorage, setCourtStorage] = useState(loadCustomCourts);
+  const { courts: customCourts, error: courtStorageError } = courtStorage;
 
   // Events: the list, which one is open, and the spots you reserved (event id -> spots)
   const [events, setEvents] = useState<ClubEvent[]>(() => seedEvents());
@@ -134,9 +174,34 @@ export default function LoginGate() {
     setScreen('confirmed');
   };
 
+  const addCourt = (court: Omit<Facility, 'id'>): boolean => {
+    const id = Math.max(0, ...COURTS.map((item) => item.id), ...GYMS.map((item) => item.id), ...customCourts.map((item) => item.id)) + 1;
+    const nextCourts = [{ ...court, id }, ...customCourts];
+
+    try {
+      window.localStorage.setItem('courtconnect.customCourts', JSON.stringify(nextCourts));
+    } catch (error) {
+      console.error('Unable to save the new court.', error);
+      return false;
+    }
+
+    setCourtStorage({ courts: nextCourts, error: '' });
+    return true;
+  };
+
   const updateBookingStatus = (id: number, status: ApprovalStatus) => {
     const booking = bookings.find((item) => item.id === id);
     if (!booking) return;
+
+    if (status === 'Confirmed') {
+      const conflict = findConfirmedBookingConflict(booking, bookings);
+      if (conflict) {
+        window.alert(
+          `This court is already booked by ${conflict.customer} from ${conflict.startTime} to ${conflict.endTime}.`,
+        );
+        return;
+      }
+    }
 
     setBookings((list) =>
       list.map((item) => (item.id === id ? { ...item, status } : item)),
@@ -147,6 +212,7 @@ export default function LoginGate() {
       booking.date,
       `${booking.startTime}–${booking.endTime}`,
     );
+    setToastOpen(true);
   };
 
   const cancelBooking = (id: number) => {
@@ -188,6 +254,7 @@ export default function LoginGate() {
       event.date,
       event.time,
     );
+    setToastOpen(true);
   };
 
   const cancelRegistration = (id: number) => {
@@ -229,9 +296,12 @@ export default function LoginGate() {
     return (
       <AdminDashboard
         bookings={bookings}
+        courts={customCourts}
+        courtStorageError={courtStorageError}
         events={events}
         registrations={registrations}
         registrationStatuses={registrationStatuses}
+        onAddCourt={addCourt}
         onBookingStatusChange={updateBookingStatus}
         onRegistrationStatusChange={updateRegistrationStatus}
         onSignOut={handleSignOut}
@@ -251,6 +321,7 @@ export default function LoginGate() {
     return (
       <SpacesPage
         choice={spaceChoice}
+        customCourts={customCourts}
         onChoiceChange={setSpaceChoice}
         onBooked={handleBooked}
         {...shell}

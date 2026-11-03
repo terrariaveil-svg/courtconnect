@@ -3,9 +3,12 @@ import './VenueDetail.css';
 import TopNav from './TopNav';
 import type { Facility } from './AvailableSpaces';
 import type { Booking } from './BookingForm';
+import { todayISO } from './eventsList';
 
 type VenueDetailProps = {
   facility: Facility;
+  facilities?: Facility[];
+  onSelectFacility?: (id: number) => void;
   userName?: string;
   unreadCount: number;
   bookingCount?: number;
@@ -129,6 +132,8 @@ function AmenityIcon({ name }: { name: AmenityIconName }) {
 
 export default function VenueDetail({
   facility,
+  facilities = [],
+  onSelectFacility,
   userName = 'Alex',
   unreadCount,
   bookingCount = 0,
@@ -157,14 +162,10 @@ export default function VenueDetail({
   ];
 
   const today = new Date();
+  const bookingDate = todayISO();
   const shortDate = today.toLocaleDateString('en-US', {
     month: 'short',
     day: '2-digit',
-    year: 'numeric',
-  });
-  const longDate = today.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
     year: 'numeric',
   });
 
@@ -178,11 +179,11 @@ export default function VenueDetail({
     onRent({
       id: Date.now(),
       facility,
-      date: longDate,
+      date: bookingDate,
       startTime: slot,
       endTime: addHour(slot),
       customer: 'Alex Wassabi',
-      status: 'Confirmed',
+      status: 'Pending',
     });
   };
 
@@ -208,6 +209,29 @@ export default function VenueDetail({
         <button type="button" className="vd-back" onClick={onBack}>
           ‹ Back to Available Spaces
         </button>
+
+        {facilities.length > 1 && onSelectFacility && (
+          <section className="vd-court-picker" aria-label="Available courts">
+            <strong>Choose a court</strong>
+            <div className="vd-court-options">
+              {facilities.map((option) => (
+                <button
+                  type="button"
+                  key={option.id}
+                  className={`vd-court-option${option.id === facility.id ? ' is-selected' : ''}`}
+                  aria-pressed={option.id === facility.id}
+                  onClick={() => onSelectFacility(option.id)}
+                >
+                  <img src={option.image} alt="" />
+                  <span>
+                    <strong>{option.name}</strong>
+                    <span>{option.type} · ₱{option.price} / hour</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="vd-grid">
           {/* Left column */}

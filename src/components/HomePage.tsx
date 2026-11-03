@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import "./HomePage.css";
+import { UnreadToast } from "./NotifAlerts";
 import logo from "../assets/courtconnect-logo.png";
 import heroImg from "../assets/tennis-court.png";
 import QuickBook, { type SpaceChoice } from "./QuickBook";
@@ -87,6 +88,9 @@ export default function HomePage({
   onOpenProfile,
   onShowSpaces,
   onOpenNotifications,
+  unreadCount = 0,
+  showUnreadAlert = false,
+  onCloseUnreadAlert,
 }: HomePageProps) {
   const [quickBookOpen, setQuickBookOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -313,10 +317,12 @@ export default function HomePage({
           </div>
         </section>
 
-        <section
-          className="home-right"
-          style={{ backgroundImage: `url(${heroImg})` }}
-        >
+        <section className="home-right">
+          <img
+            className="home-right-img"
+            src={heroImg}
+            alt="Aerial view of a tennis court surrounded by trees"
+          />
           <button
             className="home-quickbook"
             onClick={() => setQuickBookOpen(true)}
@@ -325,6 +331,16 @@ export default function HomePage({
           </button>
         </section>
       </main>
+      {showUnreadAlert && unreadCount > 0 && (
+        <UnreadToast
+          count={unreadCount}
+          onView={() => {
+            onCloseUnreadAlert?.();
+            onOpenNotifications?.();
+          }}
+          onClose={() => onCloseUnreadAlert?.()}
+        />
+      )}
       {quickBookOpen && (
         <QuickBook
           onClose={() => setQuickBookOpen(false)}

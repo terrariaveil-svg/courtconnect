@@ -81,6 +81,92 @@
   padding: 18px 0 4px;
 }
 
+.admin-court-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-court-form label {
+  display: grid;
+  gap: 6px;
+  color: #34495a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-court-form input,
+.admin-court-form select,
+.admin-court-form textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 10px;
+  border: 1px solid #d5e0e4;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #10253a;
+  font: inherit;
+  font-weight: 400;
+}
+
+.admin-court-form textarea {
+  resize: vertical;
+}
+
+.admin-court-description,
+.admin-court-image,
+.admin-form-error,
+.admin-add-court {
+  grid-column: 1 / -1;
+}
+
+.admin-form-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 13px;
+}
+
+.admin-add-court {
+  justify-self: start;
+}
+
+.admin-court-list {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-court-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid #e7edef;
+  border-radius: 8px;
+}
+
+.admin-court-list img {
+  width: 64px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.admin-court-list span {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+  color: #687986;
+  font-size: 13px;
+}
+
+.admin-court-list span strong,
+.admin-court-list > li > strong {
+  color: #10253a;
+}
+
 .admin-list {
   display: grid;
   gap: 12px;
@@ -110,6 +196,15 @@
   font-size: 13px;
 }
 
+.admin-request-info .admin-conflict {
+  color: #b42318;
+  font-weight: 700;
+}
+
+.admin-request-info .admin-availability {
+  color: #087a4f;
+}
+
 .admin-actions {
   display: flex;
   flex-shrink: 0;
@@ -123,6 +218,11 @@
 
 .admin-approve:hover {
   background: #08734b;
+}
+
+.admin-approve:disabled {
+  background: #aab8b2;
+  cursor: not-allowed;
 }
 
 .admin-reject:hover,
@@ -140,7 +240,23 @@
     align-items: flex-start;
   }
 
+  .admin-court-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-court-description,
+  .admin-court-image,
+  .admin-form-error,
+  .admin-add-court {
+    grid-column: auto;
+  }
+
   .admin-request {
     flex-direction: column;
+  }
+
+  .admin-court-list li {
+    align-items: flex-start;
+    flex-wrap: wrap;
   }
 }
