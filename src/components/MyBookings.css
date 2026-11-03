@@ -147,6 +147,17 @@
   color: #a32626;
 }
 
+.mb-status-done {
+  background: #e6e9ed;
+  color: #475569;
+}
+
+.mb-done-note {
+  color: #687986;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .mb-meta {
   margin: 0 0 8px;
   padding: 0;

@@ -114,6 +114,11 @@
   background: #000000;
 }
 
+.login-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .login-error {
   margin: 0;
   color: #b42318;
@@ -131,6 +136,22 @@
   font-size: 15px;
   color: #111111;
   text-decoration: underline;
+}
+
+.login-mode-toggle {
+  align-self: center;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #111111;
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.login-mode-toggle:hover {
+  color: #0a6b45;
 }
 
 @media (max-width: 700px) {

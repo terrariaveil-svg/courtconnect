@@ -182,7 +182,7 @@ export default function VenueDetail({
       date: bookingDate,
       startTime: slot,
       endTime: addHour(slot),
-      customer: 'Alex Wassabi',
+      customer: userName,
       status: 'Pending',
     });
   };

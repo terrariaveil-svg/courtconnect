@@ -35,13 +35,19 @@ export default function BookingConfirmed({ booking, onDone }: Props) {
         </div>
 
         <span className="bc-eyebrow">
-          {booking.status === "Pending" ? "Request submitted" : `Booking ${booking.status.toLowerCase()}`}
+          {booking.status === "Pending"
+            ? "Request submitted"
+            : booking.status === "Done"
+              ? "Booking completed"
+              : `Booking ${booking.status.toLowerCase()}`}
         </span>
         <h1 className="bc-title">
           {booking.status === "Pending"
             ? "Waiting for admin approval"
             : booking.status === "Confirmed"
               ? "Your space is reserved!"
+              : booking.status === "Done"
+                ? "Your booking is complete"
               : "Booking request declined"}
         </h1>
         <p className="bc-sub">
@@ -49,6 +55,8 @@ export default function BookingConfirmed({ booking, onDone }: Props) {
             ? "Your booking request was sent to the admin. Check My Bookings for its status."
             : booking.status === "Confirmed"
               ? "Your booking is approved. Show this reference when you arrive."
+              : booking.status === "Done"
+                ? "Your scheduled booking has ended and has been marked done."
               : "Your booking request was not approved. You can make another request."}
         </p>
 

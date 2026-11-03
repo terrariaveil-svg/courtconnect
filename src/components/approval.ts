@@ -1,1 +1,1 @@
-export type ApprovalStatus = 'Pending' | 'Confirmed' | 'Rejected';
+export type ApprovalStatus = 'Pending' | 'Confirmed' | 'Rejected' | 'Done';

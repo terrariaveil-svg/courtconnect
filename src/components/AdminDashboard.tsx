@@ -39,6 +39,7 @@ export default function AdminDashboard({
   const [courtImage, setCourtImage] = useState<File | null>(null);
   const [courtFormError, setCourtFormError] = useState('');
   const pendingBookings = bookings.filter((booking) => booking.status === 'Pending');
+  const completedBookings = bookings.filter((booking) => booking.status === 'Done');
   const pendingRegistrations = events.filter(
     (event) =>
       registrations[event.id] > 0 &&
@@ -238,6 +239,29 @@ export default function AdminDashboard({
                 </li>
               );
             })}
+          </ul>
+        )}
+      </section>
+
+      <section className="admin-section" aria-labelledby="admin-completed-title">
+        <div className="admin-section-heading">
+          <h2 id="admin-completed-title">Completed bookings</h2>
+          <span>{completedBookings.length} done</span>
+        </div>
+        {completedBookings.length === 0 ? (
+          <p className="admin-empty">Completed bookings will appear here after their scheduled end time.</p>
+        ) : (
+          <ul className="admin-list">
+            {completedBookings.map((booking) => (
+              <li className="admin-request" key={booking.id}>
+                <div className="admin-request-info">
+                  <strong>{booking.facility.name}</strong>
+                  <span>{booking.customer} · {booking.facility.location}</span>
+                  <span>{booking.date} · {booking.startTime}–{booking.endTime}</span>
+                </div>
+                <span className="admin-done-badge">Done</span>
+              </li>
+            ))}
           </ul>
         )}
       </section>

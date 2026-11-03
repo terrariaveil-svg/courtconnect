@@ -12,7 +12,7 @@ export default function MyBookings({ bookings, onCancel }: Props) {
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
 
   const totalSpend = bookings
-    .filter((booking) => booking.status === "Confirmed")
+    .filter((booking) => booking.status === "Confirmed" || booking.status === "Done")
     .reduce((sum, booking) => sum + booking.facility.price, 0);
 
   return (
@@ -93,7 +93,9 @@ export default function MyBookings({ bookings, onCancel }: Props) {
                     <span> / hour</span>
                   </strong>
 
-                  {confirmingId === booking.id ? (
+                  {booking.status === "Done" ? (
+                    <span className="mb-done-note">Booking completed</span>
+                  ) : confirmingId === booking.id ? (
                     <div className="mb-confirm" role="alert">
                       <span>Cancel this booking?</span>
                       <div className="mb-confirm-actions">

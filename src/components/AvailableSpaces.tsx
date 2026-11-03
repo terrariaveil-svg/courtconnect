@@ -22,7 +22,7 @@ interface Props {
   onOpenBookings?: () => void;
 }
 
-// The Available Spaces page: the full venue layout from the Figma design
+
 export default function AvailableSpaces({
   facility,
   onBook,

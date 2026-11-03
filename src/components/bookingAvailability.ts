@@ -19,6 +19,26 @@ function toMinutes(time: string): number {
   return hours * 60 + minutes;
 }
 
+export function bookingEndDate(booking: Booking): Date | undefined {
+  const minutes = toMinutes(booking.endTime);
+  if (!Number.isFinite(minutes)) return undefined;
+
+  const isoDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(booking.date);
+  const endDate = isoDate
+    ? new Date(Number(isoDate[1]), Number(isoDate[2]) - 1, Number(isoDate[3]))
+    : new Date(booking.date);
+
+  if (Number.isNaN(endDate.getTime())) return undefined;
+
+  endDate.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+  return endDate;
+}
+
+export function hasBookingEnded(booking: Booking, now: Date): boolean {
+  const endDate = bookingEndDate(booking);
+  return endDate !== undefined && endDate.getTime() <= now.getTime();
+}
+
 export function findConfirmedBookingConflict(
   candidate: Booking,
   bookings: Booking[],

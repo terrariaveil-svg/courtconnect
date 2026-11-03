@@ -3,11 +3,11 @@ import fitnessImg from '../assets/fitness-center.jpeg';
 import profileImg from '../assets/profile.jpeg';
 
 type UserInfoProps = {
+  userName?: string;
   onHome: () => void;
 };
 
-const user = {
-  name: 'Alex Wassabi',
+const profileDetails = {
   registered: 'JULY -28-2026',
   location: 'Meohao, Kidapawan city, Nort cotabato',
   workouts: 12,
@@ -19,7 +19,7 @@ const recent = [
   { name: 'Fitness Center', visited: 'October 20, 2026', image: fitnessImg },
 ];
 
-export default function UserInfo({ onHome }: UserInfoProps) {
+export default function UserInfo({ userName = 'Alex Wassabi', onHome }: UserInfoProps) {
   return (
     <div className="user-page">
       <div className="user-card">
@@ -27,12 +27,12 @@ export default function UserInfo({ onHome }: UserInfoProps) {
         <header className="user-header">
           <div className="user-header-left">
             <div className="user-photo">
-              <img src={profileImg} alt={user.name} className="user-photo-img" />
+              <img src={profileImg} alt={userName} className="user-photo-img" />
             </div>
             <div>
-              <h1 className="user-name">{user.name}</h1>
-              <p className="user-registered">DATE REGISTERED: {user.registered}</p>
-              <p className="user-location">{user.location}</p>
+              <h1 className="user-name">{userName}</h1>
+              <p className="user-registered">DATE REGISTERED: {profileDetails.registered}</p>
+              <p className="user-location">{profileDetails.location}</p>
             </div>
           </div>
 
@@ -49,7 +49,7 @@ export default function UserInfo({ onHome }: UserInfoProps) {
               <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />
               </svg>
-              <strong>{user.workouts}</strong>
+              <strong>{profileDetails.workouts}</strong>
               <span>Workouts</span>
             </div>
 
@@ -57,7 +57,7 @@ export default function UserInfo({ onHome }: UserInfoProps) {
               <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4-1-6 1-10z" />
               </svg>
-              <strong>{user.streak}</strong>
+              <strong>{profileDetails.streak}</strong>
               <span>Day streak</span>
             </div>
 
@@ -66,7 +66,7 @@ export default function UserInfo({ onHome }: UserInfoProps) {
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 7v5l3 2" />
               </svg>
-              <strong>{user.totalTime}</strong>
+              <strong>{profileDetails.totalTime}</strong>
               <span>Total time</span>
             </div>
           </div>
