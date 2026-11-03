@@ -114,6 +114,18 @@
   background: #000000;
 }
 
+.login-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 13px;
+}
+
+.login-admin-hint {
+  margin: 0;
+  color: #555555;
+  font-size: 12px;
+}
+
 .login-forgot {
   align-self: flex-start;
   font-size: 15px;

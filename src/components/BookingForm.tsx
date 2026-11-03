@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { X, CalendarDays } from "lucide-react";
 import type { Facility } from "./AvailableSpaces";
+import type { ApprovalStatus } from "./approval";
 
 export interface Booking {
   id: number;
@@ -10,7 +11,7 @@ export interface Booking {
   date: string;
   startTime: string;
   endTime: string;
-  status: "Confirmed";
+  status: ApprovalStatus;
 }
 
 interface Props {
@@ -47,7 +48,7 @@ export default function BookingForm({ facility, onClose, onConfirm }: Props) {
       date,
       startTime,
       endTime,
-      status: "Confirmed",
+      status: "Pending",
     });
   }
 

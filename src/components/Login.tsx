@@ -5,9 +5,10 @@ import logo from '../assets/courtconnect-logo.png';
 
 type LoginProps = {
   onLogin: (email: string, password: string) => void;
+  error?: string;
 };
 
-export default function Login({ onLogin }: LoginProps) {
+export default function Login({ onLogin, error }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -58,6 +59,11 @@ export default function Login({ onLogin }: LoginProps) {
           <button type="submit" className="login-button">
             Sign In
           </button>
+
+          {error && <p className="login-error" role="alert">{error}</p>}
+          <p className="login-admin-hint">
+            Admin demo: admin@courtconnect.com · admin123
+          </p>
 
           <a href="#" className="login-forgot">
             Forgot password?

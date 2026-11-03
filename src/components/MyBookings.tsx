@@ -11,7 +11,9 @@ export default function MyBookings({ bookings, onCancel }: Props) {
   // Which booking is waiting for "are you sure?"
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
 
-  const totalSpend = bookings.reduce((sum, b) => sum + b.facility.price, 0);
+  const totalSpend = bookings
+    .filter((booking) => booking.status === "Confirmed")
+    .reduce((sum, booking) => sum + booking.facility.price, 0);
 
   return (
     <div className="mb-page">
@@ -53,7 +55,9 @@ export default function MyBookings({ bookings, onCancel }: Props) {
                 <div className="mb-info">
                   <div className="mb-top">
                     <h2>{booking.facility.name}</h2>
-                    <span className="mb-status">{booking.status}</span>
+                    <span className={`mb-status mb-status-${booking.status.toLowerCase()}`}>
+                      {booking.status}
+                    </span>
                   </div>
 
                   <ul className="mb-meta">

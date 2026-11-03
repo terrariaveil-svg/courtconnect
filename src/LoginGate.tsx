@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
 import LoadingScreen from './components/LoadingScreen';
 import HomePage from './components/HomePage';
@@ -16,6 +17,7 @@ import EventDetail from './components/EventDetail';
 import { makeEvent, relDay, seedEvents } from './components/eventsList';
 import type { ClubEvent, NewEvent } from './components/eventsList';
 import type { Booking } from './components/BookingForm';
+import type { ApprovalStatus } from './components/approval';
 import type { SpaceChoice } from './components/QuickBook';
 import { INITIAL_NOTICES } from './components/notificationsData';
 import type { Notice } from './components/notificationsData';
@@ -25,6 +27,7 @@ import type { Reminder } from './components/remindersData';
 type Screen =
   | 'loading'
   | 'login'
+  | 'admin'
   | 'home'
   | 'profile'
   | 'activity'
@@ -38,8 +41,11 @@ type Screen =
   | 'event';
 
 export default function LoginGate() {
+  const adminEmail = 'admin@courtconnect.com';
+  const adminPassword = 'admin123';
   // The app starts on the loading screen, then goes to the login
   const [screen, setScreen] = useState<Screen>('loading');
+  const [loginError, setLoginError] = useState('');
   const [notices, setNotices] = useState<Notice[]>(INITIAL_NOTICES);
   const [reminders, setReminders] = useState<Reminder[]>(INITIAL_REMINDERS);
   const [toastOpen, setToastOpen] = useState(false);
@@ -53,6 +59,7 @@ export default function LoginGate() {
   const [events, setEvents] = useState<ClubEvent[]>(() => seedEvents());
   const [eventId, setEventId] = useState<number | null>(null);
   const [registrations, setRegistrations] = useState<Record<number, number>>({});
+  const [registrationStatuses, setRegistrationStatuses] = useState<Record<number, ApprovalStatus>>({});
 
   const unreadCount = notices.filter((n) => n.unread).length;
 
@@ -92,18 +99,24 @@ export default function LoginGate() {
   }, []);
 
   // Signed in -> home (with the unread pop-up)
-  const handleLogin = () => {
+  const handleLogin = (email: string, password: string) => {
+    if (email.trim().toLowerCase() === adminEmail) {
+      if (password !== adminPassword) {
+        setLoginError('Incorrect admin password.');
+        return;
+      }
+      setLoginError('');
+      setScreen('admin');
+      return;
+    }
+
+    setLoginError('');
     setToastOpen(true);
     setScreen('home');
   };
 
   const handleSignOut = () => {
-    setNotices(INITIAL_NOTICES); // reset so everything can be tested again
-    setReminders(INITIAL_REMINDERS);
-    setBookings([]);
     setLastBooking(null);
-    setEvents(seedEvents());
-    setRegistrations({});
     setEventId(null);
     setToastOpen(false);
     setScreen('login');
@@ -119,6 +132,21 @@ export default function LoginGate() {
     setBookings((list) => [booking, ...list]);
     setLastBooking(booking);
     setScreen('confirmed');
+  };
+
+  const updateBookingStatus = (id: number, status: ApprovalStatus) => {
+    const booking = bookings.find((item) => item.id === id);
+    if (!booking) return;
+
+    setBookings((list) =>
+      list.map((item) => (item.id === id ? { ...item, status } : item)),
+    );
+    pushNotice(
+      `Booking ${status.toLowerCase()}: ${booking.facility.name}`,
+      `Your booking request for ${booking.facility.name} was ${status.toLowerCase()}.`,
+      booking.date,
+      `${booking.startTime}–${booking.endTime}`,
+    );
   };
 
   const cancelBooking = (id: number) => {
@@ -137,19 +165,38 @@ export default function LoginGate() {
 
   const registerForEvent = (id: number, spots: number) => {
     setRegistrations((prev) => ({ ...prev, [id]: spots }));
+    setRegistrationStatuses((prev) => ({ ...prev, [id]: 'Pending' }));
     const event = events.find((e) => e.id === id);
     if (event) {
       pushNotice(
-        `Registered: ${event.name}`,
-        `You reserved ${spots} spot${spots === 1 ? '' : 's'} for ${event.name} at ${event.venue}.`,
+        `Registration request: ${event.name}`,
+        `Your request for ${spots} spot${spots === 1 ? '' : 's'} at ${event.venue} is waiting for admin approval.`,
         event.date,
         event.time,
       );
     }
   };
 
+  const updateRegistrationStatus = (id: number, status: ApprovalStatus) => {
+    const event = events.find((item) => item.id === id);
+    if (!event) return;
+
+    setRegistrationStatuses((previous) => ({ ...previous, [id]: status }));
+    pushNotice(
+      `Registration ${status.toLowerCase()}: ${event.name}`,
+      `Your registration request for ${event.name} was ${status.toLowerCase()}.`,
+      event.date,
+      event.time,
+    );
+  };
+
   const cancelRegistration = (id: number) => {
     setRegistrations((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setRegistrationStatuses((prev) => {
       const next = { ...prev };
       delete next[id];
       return next;
@@ -175,7 +222,21 @@ export default function LoginGate() {
   }
 
   if (screen === 'login') {
-    return <Login onLogin={handleLogin} />;
+    return <Login onLogin={handleLogin} error={loginError} />;
+  }
+
+  if (screen === 'admin') {
+    return (
+      <AdminDashboard
+        bookings={bookings}
+        events={events}
+        registrations={registrations}
+        registrationStatuses={registrationStatuses}
+        onBookingStatusChange={updateBookingStatus}
+        onRegistrationStatusChange={updateRegistrationStatus}
+        onSignOut={handleSignOut}
+      />
+    );
   }
 
   if (screen === 'profile') {
@@ -205,6 +266,7 @@ export default function LoginGate() {
           event={currentEvent}
           others={events.filter((e) => e.id !== currentEvent.id)}
           tickets={registrations[currentEvent.id] ?? 0}
+          registrationStatus={registrationStatuses[currentEvent.id]}
           onBack={() => setScreen('events')}
           onRegister={registerForEvent}
           onCancel={cancelRegistration}
@@ -293,7 +355,11 @@ export default function LoginGate() {
   return (
     <HomePage
       bookings={bookings}
-      registeredEvents={events.filter((event) => registrations[event.id] > 0)}
+      registeredEvents={events.filter(
+        (event) =>
+          registrations[event.id] > 0 &&
+          registrationStatuses[event.id] === 'Confirmed',
+      )}
       unreadCount={unreadCount}
       showUnreadAlert={toastOpen}
       onCloseUnreadAlert={() => setToastOpen(false)}

@@ -1,0 +1,146 @@
+.admin-page {
+  min-height: 100vh;
+  padding: 40px max(24px, calc((100% - 1040px) / 2));
+  background: #f3f8f9;
+  color: #10253a;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.admin-header,
+.admin-section-heading,
+.admin-request {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.admin-header {
+  margin-bottom: 30px;
+}
+
+.admin-eyebrow {
+  color: #0a8a5a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.admin-header h1 {
+  margin: 6px 0;
+  font-size: 30px;
+}
+
+.admin-header p,
+.admin-empty {
+  color: #687986;
+}
+
+.admin-signout,
+.admin-actions button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-signout,
+.admin-reject {
+  background: #edf2f4;
+  color: #10253a;
+}
+
+.admin-section {
+  margin-bottom: 24px;
+  padding: 22px;
+  border: 1px solid #e1e9ec;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.admin-section-heading {
+  margin-bottom: 14px;
+}
+
+.admin-section-heading h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.admin-section-heading > span {
+  color: #0a8a5a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-empty {
+  margin: 0;
+  padding: 18px 0 4px;
+}
+
+.admin-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-request {
+  padding: 16px;
+  border: 1px solid #e7edef;
+  border-radius: 8px;
+}
+
+.admin-request-info {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.admin-request-info strong {
+  font-size: 15px;
+}
+
+.admin-request-info span {
+  color: #687986;
+  font-size: 13px;
+}
+
+.admin-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.admin-approve {
+  background: #0a8a5a;
+  color: #ffffff;
+}
+
+.admin-approve:hover {
+  background: #08734b;
+}
+
+.admin-reject:hover,
+.admin-signout:hover {
+  background: #dfe7ea;
+}
+
+@media (max-width: 600px) {
+  .admin-page {
+    padding: 24px 16px;
+  }
+
+  .admin-header,
+  .admin-request {
+    align-items: flex-start;
+  }
+
+  .admin-request {
+    flex-direction: column;
+  }
+}

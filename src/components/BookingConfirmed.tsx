@@ -34,9 +34,23 @@ export default function BookingConfirmed({ booking, onDone }: Props) {
           </svg>
         </div>
 
-        <span className="bc-eyebrow">Booking successful</span>
-        <h1 className="bc-title">Your space is reserved!</h1>
-        <p className="bc-sub">We saved your booking. Show this reference when you arrive.</p>
+        <span className="bc-eyebrow">
+          {booking.status === "Pending" ? "Request submitted" : `Booking ${booking.status.toLowerCase()}`}
+        </span>
+        <h1 className="bc-title">
+          {booking.status === "Pending"
+            ? "Waiting for admin approval"
+            : booking.status === "Confirmed"
+              ? "Your space is reserved!"
+              : "Booking request declined"}
+        </h1>
+        <p className="bc-sub">
+          {booking.status === "Pending"
+            ? "Your booking request was sent to the admin. Check My Bookings for its status."
+            : booking.status === "Confirmed"
+              ? "Your booking is approved. Show this reference when you arrive."
+              : "Your booking request was not approved. You can make another request."}
+        </p>
 
         <div className="bc-ref">
           <span>Reference</span>

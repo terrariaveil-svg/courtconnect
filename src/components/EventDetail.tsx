@@ -3,11 +3,13 @@ import './EventDetail.css';
 import type { ClubEvent } from './eventsList';
 import { fmtFull } from './eventsList';
 import { extrasFor } from './eventDetails';
+import type { ApprovalStatus } from './approval';
 
 type EventDetailProps = {
   event: ClubEvent;
   others: ClubEvent[];
   tickets: number; // 0 when you are not registered
+  registrationStatus?: ApprovalStatus;
   onBack: () => void;
   onRegister: (id: number, tickets: number) => void;
   onCancel: (id: number) => void;
@@ -20,6 +22,7 @@ export default function EventDetail({
   event,
   others,
   tickets,
+  registrationStatus,
   onBack,
   onRegister,
   onCancel,
@@ -33,8 +36,9 @@ export default function EventDetail({
     window.scrollTo(0, 0);
   }, []);
 
-  const registered = tickets > 0;
-  const spotsLeft = Math.max(0, event.spotsLeft - tickets);
+  const registered = tickets > 0 && registrationStatus !== 'Rejected';
+  const reservedTickets = registered ? tickets : 0;
+  const spotsLeft = Math.max(0, event.spotsLeft - reservedTickets);
   const maxTickets = Math.max(1, Math.min(4, spotsLeft));
   const spots = Math.min(count, maxTickets);
   const percentFull = Math.round(((event.capacity - spotsLeft) / event.capacity) * 100);
@@ -115,7 +119,13 @@ export default function EventDetail({
 
         {/* ---------- Right: reserve a spot ---------- */}
         <aside className="ed-side" aria-label="Reserve your spot">
-          <h2>{registered ? 'You’re registered' : 'Reserve your spot'}</h2>
+          <h2>
+            {registered
+              ? registrationStatus === 'Pending'
+                ? 'Registration pending approval'
+                : 'You’re registered'
+              : 'Reserve your spot'}
+          </h2>
 
           <div className="ed-price">
             <strong>{priceText(event.price)}</strong>
@@ -135,7 +145,11 @@ export default function EventDetail({
           {registered ? (
             <>
               <div className="ed-done" role="status">
-                <strong>See you there!</strong>
+                <strong>
+                  {registrationStatus === 'Pending'
+                    ? 'Your request is waiting for admin approval.'
+                    : 'See you there!'}
+                </strong>
                 <span>
                   {tickets} spot{tickets === 1 ? '' : 's'} reserved · Code {code}
                 </span>

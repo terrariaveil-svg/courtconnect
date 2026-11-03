@@ -137,6 +137,16 @@
   font-weight: 700;
 }
 
+.mb-status-pending {
+  background: #fff2cc;
+  color: #805b00;
+}
+
+.mb-status-rejected {
+  background: #fde2e2;
+  color: #a32626;
+}
+
 .mb-meta {
   margin: 0 0 8px;
   padding: 0;
