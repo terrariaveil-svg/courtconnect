@@ -18,7 +18,10 @@ import { makeEvent, relDay, seedEvents } from './components/eventsList';
 import type { ClubEvent, NewEvent } from './components/eventsList';
 import type { Booking } from './components/BookingForm';
 import type { ApprovalStatus } from './components/approval';
-import { findConfirmedBookingConflict, hasBookingEnded } from './components/bookingAvailability';
+import {
+  findConfirmedBookingConflict,
+  hasBookingEnded,
+} from './components/bookingAvailability';
 import type { Facility } from './components/AvailableSpaces';
 import { COURTS, GYMS } from './components/spacesData';
 import type { SpaceChoice } from './components/QuickBook';
@@ -26,6 +29,8 @@ import { INITIAL_NOTICES } from './components/notificationsData';
 import type { Notice } from './components/notificationsData';
 import { INITIAL_REMINDERS } from './components/remindersData';
 import type { Reminder } from './components/remindersData';
+import { useRecentVisits } from './components/useRecentVisits';
+import type { Visit } from './components/recentVisits';
 
 type Screen =
   | 'loading'
@@ -69,16 +74,22 @@ function isClientAccountList(value: unknown): value is ClientAccount[] {
 
 function getClientAccounts(): ClientAccount[] {
   const savedAccounts = window.localStorage.getItem(CLIENT_ACCOUNTS_KEY);
+
   if (!savedAccounts) return [];
 
   const parsed: unknown = JSON.parse(savedAccounts);
+
   if (!isClientAccountList(parsed)) {
     throw new Error('Saved account data is invalid.');
   }
+
   return parsed;
 }
 
-async function hashPassword(password: string, salt: Uint8Array): Promise<string> {
+async function hashPassword(
+  password: string,
+  salt: Uint8Array,
+): Promise<string> {
   const key = await window.crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(password),
@@ -86,27 +97,44 @@ async function hashPassword(password: string, salt: Uint8Array): Promise<string>
     false,
     ['deriveBits'],
   );
+
   const saltBuffer = new ArrayBuffer(salt.byteLength);
   new Uint8Array(saltBuffer).set(salt);
+
   const bits = await window.crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt: saltBuffer, iterations: 120_000 },
+    {
+      name: 'PBKDF2',
+      hash: 'SHA-256',
+      salt: saltBuffer,
+      iterations: 120_000,
+    },
     key,
     256,
   );
-  return Array.from(new Uint8Array(bits), (byte) => byte.toString(16).padStart(2, '0')).join('');
+
+  return Array.from(
+    new Uint8Array(bits),
+    (byte) => byte.toString(16).padStart(2, '0'),
+  ).join('');
 }
 
 function toHex(bytes: Uint8Array): string {
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(
+    bytes,
+    (byte) => byte.toString(16).padStart(2, '0'),
+  ).join('');
 }
 
 function fromHex(hex: string): Uint8Array {
   if (!/^(?:[0-9a-f]{2})+$/i.test(hex)) {
     throw new Error('Saved account data is invalid.');
   }
+
   return new Uint8Array(
-    Array.from({ length: hex.length / 2 }, (_, index) =>
-      Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16),
+    Array.from(
+      { length: hex.length / 2 },
+      (_, index) =>
+        Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16),
     ),
   );
 }
@@ -129,12 +157,21 @@ function isFacilityList(value: unknown): value is Facility[] {
   );
 }
 
-function loadCustomCourts(): { courts: Facility[]; error: string } {
+function loadCustomCourts(): {
+  courts: Facility[];
+  error: string;
+} {
   try {
-    const savedCourts = window.localStorage.getItem('courtconnect.customCourts');
-    if (!savedCourts) return { courts: [], error: '' };
+    const savedCourts = window.localStorage.getItem(
+      'courtconnect.customCourts',
+    );
+
+    if (!savedCourts) {
+      return { courts: [], error: '' };
+    }
 
     const parsed: unknown = JSON.parse(savedCourts);
+
     if (!isFacilityList(parsed)) {
       throw new Error('Saved court data is invalid.');
     }
@@ -142,70 +179,109 @@ function loadCustomCourts(): { courts: Facility[]; error: string } {
     return { courts: parsed, error: '' };
   } catch (error) {
     console.error('Unable to load saved courts.', error);
-    return { courts: [], error: 'Saved courts could not be loaded from this device.' };
+
+    return {
+      courts: [],
+      error: 'Saved courts could not be loaded from this device.',
+    };
   }
+}
+
+function visitDate(booking: Booking): Date {
+  const withTime = new Date(`${booking.date} ${booking.endTime}`);
+
+  if (!Number.isNaN(withTime.getTime())) {
+    return withTime;
+  }
+
+  const dayOnly = new Date(booking.date);
+
+  return Number.isNaN(dayOnly.getTime())
+    ? new Date()
+    : dayOnly;
 }
 
 export default function LoginGate() {
   const adminEmail = 'admin@courtconnect.com';
   const adminPassword = 'admin123';
-  // The app starts on the loading screen, then goes to the login
+
   const [screen, setScreen] = useState<Screen>('loading');
   const [loginError, setLoginError] = useState('');
   const [userName, setUserName] = useState('Alex');
+  const [userEmail, setUserEmail] = useState('guest');
   const [notices, setNotices] = useState<Notice[]>(INITIAL_NOTICES);
   const [reminders, setReminders] = useState<Reminder[]>(INITIAL_REMINDERS);
   const [toastOpen, setToastOpen] = useState(false);
+
   const completionNotices = useRef(new Set<number>());
 
-  // Quick book -> available spaces -> booking
+  const {
+    visits,
+    record: recordVisit,
+    clear: clearVisits,
+  } = useRecentVisits(userEmail);
+
   const [spaceChoice, setSpaceChoice] = useState<SpaceChoice>('court');
+  const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
+
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [lastBooking, setLastBooking] = useState<Booking | null>(null);
-  const [courtStorage, setCourtStorage] = useState(loadCustomCourts);
-  const { courts: customCourts, error: courtStorageError } = courtStorage;
 
-  // Events: the list, which one is open, and the spots you reserved (event id -> spots)
+  const [courtStorage, setCourtStorage] = useState(loadCustomCourts);
+  const {
+    courts: customCourts,
+    error: courtStorageError,
+  } = courtStorage;
+
   const [events, setEvents] = useState<ClubEvent[]>(() => seedEvents());
   const [eventId, setEventId] = useState<number | null>(null);
   const [registrations, setRegistrations] = useState<Record<number, number>>({});
-  const [registrationStatuses, setRegistrationStatuses] = useState<Record<number, ApprovalStatus>>({});
+  const [registrationStatuses, setRegistrationStatuses] =
+    useState<Record<number, ApprovalStatus>>({});
 
   const unreadCount = notices.filter((n) => n.unread).length;
 
   const markRead = (id: number) => {
-    setNotices((list) => list.map((n) => (n.id === id ? { ...n, unread: false } : n)));
+    setNotices((list) =>
+      list.map((n) => (n.id === id ? { ...n, unread: false } : n)),
+    );
   };
 
   const markAllRead = () => {
-    setNotices((list) => list.map((n) => ({ ...n, unread: false })));
+    setNotices((list) =>
+      list.map((n) => ({ ...n, unread: false })),
+    );
   };
 
   const dismissReminders = () => {
     setReminders([]);
   };
 
-  const pushNotice = useCallback((title: string, text: string, date: string, time: string) => {
-    setNotices((list) => [
-      {
-        id: Math.max(0, ...list.map((n) => n.id)) + 1,
-        order: Math.min(0, ...list.map((n) => n.order)) - 1,
-        date,
-        icon: 'calendar',
-        title,
-        text,
-        day: relDay(date),
-        time,
-        type: 'Confirmation',
-        unread: true,
-      },
-      ...list,
-    ]);
-  }, []);
+  const pushNotice = useCallback(
+    (title: string, text: string, date: string, time: string) => {
+      setNotices((list) => [
+        {
+          id: Math.max(0, ...list.map((n) => n.id)) + 1,
+          order: Math.min(0, ...list.map((n) => n.order)) - 1,
+          date,
+          icon: 'calendar',
+          title,
+          text,
+          day: relDay(date),
+          time,
+          type: 'Confirmation',
+          unread: true,
+        },
+        ...list,
+      ]);
+    },
+    [],
+  );
 
   useEffect(() => {
     const completeExpiredBookings = () => {
       const now = new Date();
+
       const expiredBookings = bookings.filter(
         (booking) =>
           booking.status === 'Confirmed' &&
@@ -215,8 +291,14 @@ export default function LoginGate() {
 
       if (expiredBookings.length === 0) return;
 
-      expiredBookings.forEach((booking) => completionNotices.current.add(booking.id));
-      const expiredIds = new Set(expiredBookings.map((booking) => booking.id));
+      expiredBookings.forEach((booking) =>
+        completionNotices.current.add(booking.id),
+      );
+
+      const expiredIds = new Set(
+        expiredBookings.map((booking) => booking.id),
+      );
+
       setBookings((current) =>
         current.map((booking) =>
           expiredIds.has(booking.id) && booking.status === 'Confirmed'
@@ -224,7 +306,10 @@ export default function LoginGate() {
             : booking,
         ),
       );
+
       expiredBookings.forEach((booking) => {
+        recordVisit(booking.facility, visitDate(booking));
+
         pushNotice(
           `Booking completed: ${booking.facility.name}`,
           `Your booking for ${booking.facility.name} has ended and is marked done.`,
@@ -232,26 +317,31 @@ export default function LoginGate() {
           `${booking.startTime}–${booking.endTime}`,
         );
       });
+
       setToastOpen(true);
     };
 
     completeExpiredBookings();
-    const intervalId = window.setInterval(completeExpiredBookings, 15_000);
-    return () => window.clearInterval(intervalId);
-  }, [bookings, pushNotice]);
 
-  // Loading screen finished -> login
+    const intervalId = window.setInterval(
+      completeExpiredBookings,
+      15_000,
+    );
+
+    return () => window.clearInterval(intervalId);
+  }, [bookings, pushNotice, recordVisit]);
+
   const finishLoading = useCallback(() => {
     setScreen('login');
   }, []);
 
-  // Signed in -> home (with the unread pop-up)
   const handleLogin = async (email: string, password: string) => {
     if (email.trim().toLowerCase() === adminEmail) {
       if (password !== adminPassword) {
         setLoginError('Incorrect admin password.');
         return;
       }
+
       setLoginError('');
       setScreen('admin');
       return;
@@ -261,12 +351,19 @@ export default function LoginGate() {
       const account = getClientAccounts().find(
         (item) => item.email === email.trim().toLowerCase(),
       );
+
       if (!account) {
-        setLoginError('No account was found with that email. Create an account first.');
+        setLoginError(
+          'No account was found with that email. Create an account first.',
+        );
         return;
       }
 
-      const passwordHash = await hashPassword(password, fromHex(account.passwordSalt));
+      const passwordHash = await hashPassword(
+        password,
+        fromHex(account.passwordSalt),
+      );
+
       if (passwordHash !== account.passwordHash) {
         setLoginError('Incorrect password. Please try again.');
         return;
@@ -274,35 +371,57 @@ export default function LoginGate() {
 
       setLoginError('');
       setUserName(account.name);
+      setUserEmail(account.email);
       setToastOpen(true);
       setScreen('home');
     } catch (error) {
       console.error('Unable to sign in with the saved account.', error);
-      setLoginError('Unable to check your account on this device. Please try again.');
+
+      setLoginError(
+        'Unable to check your account on this device. Please try again.',
+      );
     }
   };
 
-  const handleCreateAccount = async (name: string, email: string, password: string) => {
+  const handleCreateAccount = async (
+    name: string,
+    email: string,
+    password: string,
+  ) => {
     const normalizedEmail = email.trim().toLowerCase();
+
     if (normalizedEmail === adminEmail) {
-      setLoginError('That email address is reserved for the administrator.');
+      setLoginError(
+        'That email address is reserved for the administrator.',
+      );
       return;
     }
 
     try {
       const accounts = getClientAccounts();
-      if (accounts.some((account) => account.email === normalizedEmail)) {
-        setLoginError('An account with that email already exists. Please sign in.');
+
+      if (
+        accounts.some(
+          (account) => account.email === normalizedEmail,
+        )
+      ) {
+        setLoginError(
+          'An account with that email already exists. Please sign in.',
+        );
         return;
       }
 
-      const salt = window.crypto.getRandomValues(new Uint8Array(16));
+      const salt = window.crypto.getRandomValues(
+        new Uint8Array(16),
+      );
+
       const account: ClientAccount = {
         name,
         email: normalizedEmail,
         passwordSalt: toHex(salt),
         passwordHash: await hashPassword(password, salt),
       };
+
       window.localStorage.setItem(
         CLIENT_ACCOUNTS_KEY,
         JSON.stringify([...accounts, account]),
@@ -310,11 +429,15 @@ export default function LoginGate() {
 
       setLoginError('');
       setUserName(account.name);
+      setUserEmail(account.email);
       setToastOpen(false);
       setScreen('home');
     } catch (error) {
       console.error('Unable to create the account on this device.', error);
-      setLoginError('Unable to create the account on this device. Please try again.');
+
+      setLoginError(
+        'Unable to create the account on this device. Please try again.',
+      );
     }
   };
 
@@ -322,13 +445,27 @@ export default function LoginGate() {
     setLastBooking(null);
     setEventId(null);
     setToastOpen(false);
+    setSelectedVisitId(null);
     setScreen('login');
   };
 
-  // Quick book -> "Show available Space"
   const openSpaces = (choice: SpaceChoice) => {
     setSpaceChoice(choice);
+    setSelectedVisitId(null);
     setScreen('spaces');
+  };
+
+  // Open the exact facility selected in Recent Visited.
+  const openVisit = (visit: Visit) => {
+    setSelectedVisitId(visit.id);
+    setSpaceChoice(
+      visit.type === 'Gym floor' ? 'gym' : 'court',
+    );
+    setScreen('spaces');
+  };
+
+  const handleFacilityViewed = (facility: Facility) => {
+    recordVisit(facility);
   };
 
   const handleBooked = (booking: Booking) => {
@@ -337,27 +474,54 @@ export default function LoginGate() {
     setScreen('confirmed');
   };
 
-  const addCourt = (court: Omit<Facility, 'id'>): boolean => {
-    const id = Math.max(0, ...COURTS.map((item) => item.id), ...GYMS.map((item) => item.id), ...customCourts.map((item) => item.id)) + 1;
-    const nextCourts = [{ ...court, id }, ...customCourts];
+  const addCourt = (
+    court: Omit<Facility, 'id'>,
+  ): boolean => {
+    const id =
+      Math.max(
+        0,
+        ...COURTS.map((item) => item.id),
+        ...GYMS.map((item) => item.id),
+        ...customCourts.map((item) => item.id),
+      ) + 1;
+
+    const nextCourts = [
+      { ...court, id },
+      ...customCourts,
+    ];
 
     try {
-      window.localStorage.setItem('courtconnect.customCourts', JSON.stringify(nextCourts));
+      window.localStorage.setItem(
+        'courtconnect.customCourts',
+        JSON.stringify(nextCourts),
+      );
     } catch (error) {
       console.error('Unable to save the new court.', error);
       return false;
     }
 
-    setCourtStorage({ courts: nextCourts, error: '' });
+    setCourtStorage({
+      courts: nextCourts,
+      error: '',
+    });
+
     return true;
   };
 
-  const updateBookingStatus = (id: number, status: ApprovalStatus) => {
+  const updateBookingStatus = (
+    id: number,
+    status: ApprovalStatus,
+  ) => {
     const booking = bookings.find((item) => item.id === id);
+
     if (!booking) return;
 
     if (status === 'Confirmed') {
-      const conflict = findConfirmedBookingConflict(booking, bookings);
+      const conflict = findConfirmedBookingConflict(
+        booking,
+        bookings,
+      );
+
       if (conflict) {
         window.alert(
           `This court is already booked by ${conflict.customer} from ${conflict.startTime} to ${conflict.endTime}.`,
@@ -367,35 +531,63 @@ export default function LoginGate() {
     }
 
     setBookings((list) =>
-      list.map((item) => (item.id === id ? { ...item, status } : item)),
+      list.map((item) =>
+        item.id === id ? { ...item, status } : item,
+      ),
     );
+
+    if (status === 'Done') {
+      recordVisit(
+        booking.facility,
+        visitDate(booking),
+      );
+    }
+
     pushNotice(
       `Booking ${status.toLowerCase()}: ${booking.facility.name}`,
       `Your booking request for ${booking.facility.name} was ${status.toLowerCase()}.`,
       booking.date,
       `${booking.startTime}–${booking.endTime}`,
     );
+
     setToastOpen(true);
   };
 
+  // Cancelling a booking does not count as visiting a facility.
   const cancelBooking = (id: number) => {
-    setBookings((list) => list.filter((b) => b.id !== id));
+    setBookings((list) =>
+      list.filter((booking) => booking.id !== id),
+    );
   };
 
-  // Events
   const openEvent = (id: number) => {
     setEventId(id);
     setScreen('event');
   };
 
   const createEvent = (data: NewEvent) => {
-    setEvents((list) => [makeEvent(Math.max(0, ...list.map((e) => e.id)) + 1, data), ...list]);
+    setEvents((list) => [
+      makeEvent(
+        Math.max(0, ...list.map((event) => event.id)) + 1,
+        data,
+      ),
+      ...list,
+    ]);
   };
 
   const registerForEvent = (id: number, spots: number) => {
-    setRegistrations((prev) => ({ ...prev, [id]: spots }));
-    setRegistrationStatuses((prev) => ({ ...prev, [id]: 'Pending' }));
-    const event = events.find((e) => e.id === id);
+    setRegistrations((prev) => ({
+      ...prev,
+      [id]: spots,
+    }));
+
+    setRegistrationStatuses((prev) => ({
+      ...prev,
+      [id]: 'Pending',
+    }));
+
+    const event = events.find((item) => item.id === id);
+
     if (event) {
       pushNotice(
         `Registration request: ${event.name}`,
@@ -406,17 +598,26 @@ export default function LoginGate() {
     }
   };
 
-  const updateRegistrationStatus = (id: number, status: ApprovalStatus) => {
+  const updateRegistrationStatus = (
+    id: number,
+    status: ApprovalStatus,
+  ) => {
     const event = events.find((item) => item.id === id);
+
     if (!event) return;
 
-    setRegistrationStatuses((previous) => ({ ...previous, [id]: status }));
+    setRegistrationStatuses((previous) => ({
+      ...previous,
+      [id]: status,
+    }));
+
     pushNotice(
       `Registration ${status.toLowerCase()}: ${event.name}`,
       `Your registration request for ${event.name} was ${status.toLowerCase()}.`,
       event.date,
       event.time,
     );
+
     setToastOpen(true);
   };
 
@@ -426,6 +627,7 @@ export default function LoginGate() {
       delete next[id];
       return next;
     });
+
     setRegistrationStatuses((prev) => {
       const next = { ...prev };
       delete next[id];
@@ -433,7 +635,6 @@ export default function LoginGate() {
     });
   };
 
-  // Props shared by the pages that use the top bar
   const shell = {
     userName,
     unreadCount,
@@ -446,7 +647,9 @@ export default function LoginGate() {
     onOpenNotifications: () => setScreen('notifications'),
   };
 
-  const currentEvent = events.find((e) => e.id === eventId);
+  const currentEvent = events.find(
+    (event) => event.id === eventId,
+  );
 
   if (screen === 'loading') {
     return <LoadingScreen onDone={finishLoading} />;
@@ -480,11 +683,24 @@ export default function LoginGate() {
   }
 
   if (screen === 'profile') {
-    return <UserInfo userName={userName} onHome={() => setScreen('home')} />;
+    return (
+      <UserInfo
+        userName={userName}
+        visits={visits}
+        onClearVisits={clearVisits}
+        onOpenVisit={openVisit}
+        onExplore={() => openSpaces('court')}
+        onHome={() => setScreen('home')}
+      />
+    );
   }
 
   if (screen === 'activity') {
-    return <ClubActivity onHome={() => setScreen('home')} />;
+    return (
+      <ClubActivity
+        onHome={() => setScreen('home')}
+      />
+    );
   }
 
   if (screen === 'spaces') {
@@ -492,6 +708,8 @@ export default function LoginGate() {
       <SpacesPage
         choice={spaceChoice}
         customCourts={customCourts}
+        initialFacilityId={selectedVisitId}
+        onFacilityViewed={handleFacilityViewed}
         onChoiceChange={setSpaceChoice}
         onBooked={handleBooked}
         {...shell}
@@ -505,9 +723,13 @@ export default function LoginGate() {
         <EventDetail
           key={currentEvent.id}
           event={currentEvent}
-          others={events.filter((e) => e.id !== currentEvent.id)}
+          others={events.filter(
+            (event) => event.id !== currentEvent.id,
+          )}
           tickets={registrations[currentEvent.id] ?? 0}
-          registrationStatus={registrationStatuses[currentEvent.id]}
+          registrationStatus={
+            registrationStatuses[currentEvent.id]
+          }
           onBack={() => setScreen('events')}
           onRegister={registerForEvent}
           onCancel={cancelRegistration}
@@ -533,7 +755,16 @@ export default function LoginGate() {
   if (screen === 'confirmed' && lastBooking) {
     return (
       <SpacesShell {...shell} active="spaces">
-        <BookingConfirmed booking={lastBooking} onDone={() => setScreen('mybookings')} />
+        <BookingConfirmed
+          booking={lastBooking}
+          onDone={() => {
+            recordVisit(
+              lastBooking.facility,
+              visitDate(lastBooking),
+            );
+            setScreen('mybookings');
+          }}
+        />
       </SpacesShell>
     );
   }
@@ -541,7 +772,10 @@ export default function LoginGate() {
   if (screen === 'mybookings' || screen === 'confirmed') {
     return (
       <SpacesShell {...shell} active="bookings">
-        <MyBookings bookings={bookings} onCancel={cancelBooking} />
+        <MyBookings
+          bookings={bookings}
+          onCancel={cancelBooking}
+        />
       </SpacesShell>
     );
   }

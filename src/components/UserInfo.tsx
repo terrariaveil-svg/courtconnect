@@ -1,10 +1,15 @@
 import './UserInfo.css';
-import fitnessImg from '../assets/fitness-center.jpeg';
 import profileImg from '../assets/profile.jpeg';
+import RecentVisited from './RecentVisited';
+import type { Visit } from './recentVisits';
 
 type UserInfoProps = {
   userName?: string;
+  visits?: Visit[];
   onHome: () => void;
+  onClearVisits?: () => void;
+  onOpenVisit?: (visit: Visit) => void;
+  onExplore?: () => void;
 };
 
 const profileDetails = {
@@ -15,11 +20,14 @@ const profileDetails = {
   totalTime: '8h',
 };
 
-const recent = [
-  { name: 'Fitness Center', visited: 'October 20, 2026', image: fitnessImg },
-];
-
-export default function UserInfo({ userName = 'Alex Wassabi', onHome }: UserInfoProps) {
+export default function UserInfo({
+  userName = 'Alex Wassabi',
+  visits = [],
+  onHome,
+  onClearVisits,
+  onOpenVisit,
+  onExplore,
+}: UserInfoProps) {
   return (
     <div className="user-page">
       <div className="user-card">
@@ -73,18 +81,15 @@ export default function UserInfo({ userName = 'Alex Wassabi', onHome }: UserInfo
         </section>
 
         {/* Recent visited */}
-        <section className="user-section">
-          <h2 className="user-section-title user-recent-title">Recent Visited:</h2>
-          {recent.map((place) => (
-            <div className="user-recent-item" key={place.name}>
-              <img src={place.image} alt={place.name} className="user-recent-photo" />
-              <div>
-                <p className="user-recent-name">{place.name}</p>
-                <p className="user-recent-date">Last visited: {place.visited}</p>
-              </div>
-            </div>
-          ))}
-        </section>
+        <RecentVisited
+          visits={visits}
+          onClear={onClearVisits}
+          onExplore={onExplore}
+          onOpen={onOpenVisit ? (id) => {
+            const visit = visits.find((v) => v.id === id);
+            if (visit) onOpenVisit(visit);
+          } : undefined}
+        />
       </div>
     </div>
   );

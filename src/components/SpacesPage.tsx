@@ -8,6 +8,8 @@ import { spacesFor } from './spacesData';
 type SpacesPageProps = {
   choice: SpaceChoice;
   customCourts: Facility[];
+  initialFacilityId?: number | null;
+  onFacilityViewed: (facility: Facility) => void;
   onChoiceChange: (choice: SpaceChoice) => void;
   onBooked: (booking: Booking) => void;
   userName?: string;
@@ -24,6 +26,8 @@ type SpacesPageProps = {
 export default function SpacesPage({
   choice,
   customCourts,
+  initialFacilityId,
+  onFacilityViewed,
   onBooked,
   userName,
   unreadCount,
@@ -35,12 +39,22 @@ export default function SpacesPage({
   onOpenEvents,
   onOpenNotifications,
 }: SpacesPageProps) {
-  const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(null);
   const facilities = [
     ...spacesFor(choice),
     ...(choice === 'court' ? customCourts : []),
   ];
-  const facility = facilities.find((item) => item.id === selectedFacilityId) ?? facilities[0];
+
+  const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(
+    initialFacilityId ?? null,
+  );
+
+  const facility =
+    facilities.find((item) => item.id === selectedFacilityId) ??
+    facilities[0];
+
+  if (!facility) {
+    return <div>No available facilities found.</div>;
+  }
 
   return (
     <VenueDetail
@@ -48,6 +62,7 @@ export default function SpacesPage({
       facility={facility}
       facilities={facilities}
       onSelectFacility={setSelectedFacilityId}
+      onFacilityViewed={onFacilityViewed}
       userName={userName}
       unreadCount={unreadCount}
       bookingCount={bookingCount}

@@ -2,8 +2,7 @@ import type { Facility } from './AvailableSpaces';
 import type { SpaceChoice } from './QuickBook';
 import fitnessImg from '../assets/fitness-center.jpeg';
 
-// Optional photo from Figma: save it as src/assets/rally-badminton.png
-// (.jpg / .jpeg / .webp also work). If the file isn't there yet, the old photo is used.
+// Optional Rally Badminton photo
 const rallyPhotos = import.meta.glob('../assets/rally-badminton.*', {
   eager: true,
   import: 'default',
@@ -11,7 +10,7 @@ const rallyPhotos = import.meta.glob('../assets/rally-badminton.*', {
 
 const rallyPhoto = Object.values(rallyPhotos)[0];
 
-// Courts: the same four facilities from App.tsx (badminton renamed to match the Figma)
+// COURT FACILITIES
 export const COURTS: Facility[] = [
   {
     id: 1,
@@ -53,7 +52,7 @@ export const COURTS: Facility[] = [
   },
 ];
 
-// Gym floor spaces (added so the "Gym floor" choice has something to show)
+// GYM FACILITIES
 export const GYMS: Facility[] = [
   {
     id: 5,
@@ -73,7 +72,27 @@ export const GYMS: Facility[] = [
     image: fitnessImg,
     description: 'Treadmills, bikes and racks for a full workout session.',
   },
+  {
+    id: 7,
+    name: 'Premium Fitness Center',
+    type: 'Gym floor',
+    location: 'Kidapawan City, North Cotabato',
+    price: 250,
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=80',
+    description: 'A modern fitness facility with equipment for strength training and workouts.',
+  },
+  {
+    id: 8,
+    name: 'Powerhouse Training Gym',
+    type: 'Gym floor',
+    location: 'Kidapawan City, North Cotabato',
+    price: 300,
+    image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=900&q=80',
+    description: 'A spacious training area equipped for full-body workouts and fitness sessions.',
+  },
 ];
 
-export const spacesFor = (choice: SpaceChoice): Facility[] =>
-  choice === 'gym' ? GYMS : COURTS;
+// RETURN FACILITIES BASED ON SELECTED CATEGORY
+export const spacesFor = (choice: SpaceChoice): Facility[] => {
+  return choice === 'gym' ? GYMS : COURTS;
+};
