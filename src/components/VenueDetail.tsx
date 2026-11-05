@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import './VenueDetail.css';
 import TopNav from './TopNav';
@@ -10,7 +9,11 @@ type VenueDetailProps = {
   facility: Facility;
   facilities?: Facility[];
   onSelectFacility?: (id: number) => void;
+
+  // Kept temporarily for compatibility with SpacesPage.
+  // This callback is intentionally NOT called when viewing a facility.
   onFacilityViewed?: (facility: Facility) => void;
+
   userName?: string;
   unreadCount: number;
   bookingCount?: number;
@@ -158,7 +161,6 @@ export default function VenueDetail({
   facility,
   facilities = [],
   onSelectFacility,
-  onFacilityViewed,
   userName = 'Alex',
   unreadCount,
   bookingCount = 0,
@@ -173,10 +175,16 @@ export default function VenueDetail({
   const [slot, setSlot] = useState(SLOTS[0]);
   const [imageIndex, setImageIndex] = useState(0);
 
+  // Only scroll to the top when the selected facility changes.
+  // Do NOT record a recent visit here.
   useEffect(() => {
-    window.scrollTo(0, 0);
-    onFacilityViewed?.(facility);
-  }, [facility, onFacilityViewed]);
+    window.scrollTo({
+      top: 0,
+      behavior: 'auto',
+    });
+
+    setImageIndex(0);
+  }, [facility.id]);
 
   const isGym = facility.type === 'Gym floor';
   const amenities = isGym ? GYM_AMENITIES : COURT_AMENITIES;
@@ -246,19 +254,12 @@ export default function VenueDetail({
       />
 
       <main className="vd-main">
-        <button
-          type="button"
-          className="vd-back"
-          onClick={onBack}
-        >
+        <button type="button" className="vd-back" onClick={onBack}>
           ‹ Back to Available Spaces
         </button>
 
         {facilities.length > 1 && onSelectFacility && (
-          <section
-            className="vd-court-picker"
-            aria-label="Available courts"
-          >
+          <section className="vd-court-picker" aria-label="Available courts">
             <strong>Choose a court</strong>
 
             <div className="vd-court-options">
@@ -266,9 +267,7 @@ export default function VenueDetail({
                 <button
                   type="button"
                   key={option.id}
-                  className={`vd-court-option${
-                    option.id === facility.id ? ' is-selected' : ''
-                  }`}
+                  className={`vd-court-option${option.id === facility.id ? ' is-selected' : ''}`}
                   aria-pressed={option.id === facility.id}
                   onClick={() => onSelectFacility(option.id)}
                 >
@@ -289,16 +288,7 @@ export default function VenueDetail({
         <div className="vd-grid">
           <div className="vd-left">
             <span className="vd-badge">
-              <svg
-                viewBox="0 0 24 24"
-                width="11"
-                height="11"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 11l9-8 9 8M5 10v10h14V10" />
               </svg>
               Indoor
@@ -313,12 +303,7 @@ export default function VenueDetail({
               </span>
 
               <span className="vd-location">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="16"
-                  height="16"
-                  fill="currentColor"
-                >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                   <path d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" />
                 </svg>
                 {facility.location}
@@ -332,21 +317,11 @@ export default function VenueDetail({
                 className="vd-gallery-img"
               />
 
-              <button
-                type="button"
-                className="vd-arrow vd-arrow-left"
-                onClick={prev}
-                aria-label="Previous photo"
-              >
+              <button type="button" className="vd-arrow vd-arrow-left" onClick={prev} aria-label="Previous photo">
                 ‹
               </button>
 
-              <button
-                type="button"
-                className="vd-arrow vd-arrow-right"
-                onClick={next}
-                aria-label="Next photo"
-              >
+              <button type="button" className="vd-arrow vd-arrow-right" onClick={next} aria-label="Next photo">
                 ›
               </button>
 
@@ -355,9 +330,7 @@ export default function VenueDetail({
                   <button
                     key={i}
                     type="button"
-                    className={`vd-dot${
-                      i === imageIndex ? ' is-active' : ''
-                    }`}
+                    className={`vd-dot${i === imageIndex ? ' is-active' : ''}`}
                     onClick={() => setImageIndex(i)}
                     aria-label={`Show photo ${i + 1}`}
                   />
@@ -394,18 +367,11 @@ export default function VenueDetail({
             </section>
           </div>
 
-          <aside
-            className="vd-summary"
-            aria-label="Booking summary"
-          >
+          <aside className="vd-summary" aria-label="Booking summary">
             <h2 className="vd-summary-title">Booking Summary</h2>
 
             <div className="vd-venue">
-              <img
-                src={facility.image}
-                alt=""
-                className="vd-venue-img"
-              />
+              <img src={facility.image} alt="" className="vd-venue-img" />
 
               <div className="vd-venue-info">
                 <strong>{facility.name}</strong>
@@ -415,9 +381,7 @@ export default function VenueDetail({
                   <span className="vd-reviews">(124 reviews)</span>
                 </span>
 
-                <span className="vd-badge vd-badge-small">
-                  Indoor
-                </span>
+                <span className="vd-badge vd-badge-small">Indoor</span>
 
                 <span className="vd-venue-loc">
                   <i className="vd-venue-dot" />
@@ -432,14 +396,7 @@ export default function VenueDetail({
               <strong>Today’s Open Slots</strong>
 
               <span className="vd-slots-date">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="11"
-                  height="11"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="5" width="18" height="16" rx="2" />
                   <path d="M3 10h18M8 3v4M16 3v4" />
                 </svg>
@@ -447,20 +404,14 @@ export default function VenueDetail({
               </span>
             </div>
 
-            <div
-              className="vd-slots"
-              role="radiogroup"
-              aria-label="Open time slots"
-            >
+            <div className="vd-slots" role="radiogroup" aria-label="Open time slots">
               {SLOTS.map((s) => (
                 <button
                   key={s}
                   type="button"
                   role="radio"
                   aria-checked={slot === s}
-                  className={`vd-slot${
-                    slot === s ? ' is-selected' : ''
-                  }`}
+                  className={`vd-slot${slot === s ? ' is-selected' : ''}`}
                   onClick={() => setSlot(s)}
                 >
                   {s}
@@ -484,21 +435,8 @@ export default function VenueDetail({
               Selected: {slot} – {addHour(slot)}
             </p>
 
-            <button
-              type="button"
-              className="vd-rent"
-              onClick={rent}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="14"
-                height="14"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+            <button type="button" className="vd-rent" onClick={rent}>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="5" width="18" height="16" rx="2" />
                 <path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4" />
               </svg>

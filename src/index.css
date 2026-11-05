@@ -15,17 +15,28 @@
   box-sizing: border-box;
 }
 
-html,
-body,
-#root {
+html {
   width: 100%;
   min-height: 100%;
   margin: 0;
+  overflow-y: auto;
+  scroll-behavior: auto;
 }
 
 body {
+  width: 100%;
   min-width: 320px;
   min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  height: auto;
+  overflow: visible;
 }
 
 button,
