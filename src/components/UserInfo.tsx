@@ -6,6 +6,7 @@ import RecentVisited from './RecentVisited';
 import type { Visit } from './recentVisits';
 import type { Booking } from './BookingForm';
 import type { Facility } from './AvailableSpaces';
+import type { ApprovalStatus } from './approval';
 import { formatTotalTime, getFitnessOverview } from './fitnessOverview';
 
 type UserInfoProps = {
@@ -19,6 +20,7 @@ type UserInfoProps = {
   onSaveAddress?: (address: string) => Promise<void>;
   onUpdateCourt?: (court: Facility) => Promise<void>;
   onDeleteCourt?: (id: number) => Promise<boolean>;
+  onBookingStatusChange?: (id: number, status: ApprovalStatus) => void;
   onClearVisits?: () => void;
   onOpenVisit?: (visit: Visit) => void;
   onExplore?: () => void;
@@ -63,6 +65,7 @@ export default function UserInfo({
   onSaveAddress,
   onUpdateCourt,
   onDeleteCourt,
+  onBookingStatusChange,
   onClearVisits,
   onOpenVisit,
   onExplore,
@@ -364,6 +367,22 @@ export default function UserInfo({
                                   <span className={`user-court-booking-status user-court-booking-status-${booking.status.toLowerCase()}`}>
                                     {booking.status}
                                   </span>
+                                  {booking.status === 'Pending' && onBookingStatusChange && (
+                                    <span className="user-court-booking-actions">
+                                      <button
+                                        type="button"
+                                        onClick={() => onBookingStatusChange(booking.id, 'Confirmed')}
+                                      >
+                                        Approve
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => onBookingStatusChange(booking.id, 'Rejected')}
+                                      >
+                                        Reject
+                                      </button>
+                                    </span>
+                                  )}
                                 </li>
                               ))}
                             </ul>

@@ -1182,10 +1182,17 @@ export default function LoginGate() {
 
     void (async () => {
       try {
-        const { error } = await requireSupabase()
-          .from('bookings')
-          .update({ status })
-          .eq('id', id);
+        const client = requireSupabase();
+        const { error } =
+          status === 'Confirmed' || status === 'Rejected'
+            ? await client.rpc('review_booking', {
+                booking_id: id,
+                new_status: status,
+              })
+            : await client
+                .from('bookings')
+                .update({ status })
+                .eq('id', id);
         if (error) throw error;
 
         setBookings((list) =>
@@ -1488,6 +1495,7 @@ export default function LoginGate() {
         address={userAddress}
         visits={visits}
         bookings={bookings}
+        onBookingStatusChange={updateBookingStatus}
         onSaveAddress={saveProfileAddress}
         courts={customCourts.filter((court) => court.ownerId === userId)}
         onUpdateCourt={updateCourt}

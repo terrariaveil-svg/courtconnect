@@ -33,6 +33,7 @@ RPC_NAMES = {
     "get_my_facility_ids",
     "get_booking_availability",
     "create_booking",
+    "review_booking",
     "review_court_request",
     "register_for_event",
     "review_event_registration",
