@@ -360,7 +360,7 @@ export default function App() {
         )}
 
         {page === "Profile" && (
-          <UserInfo onHome={() => setPage("Home")} />
+          <UserInfo bookings={bookings} onHome={() => setPage("Home")} />
         )}
 
         {page === "Facilities" && (

@@ -27,5 +27,11 @@ export function useRecentVisits(userKey: string) {
     saveVisits(userKey, []);
   }, [userKey]);
 
-  return { visits, record, clear };
+  const replace = useCallback((forUserKey: string, next: Visit[]) => {
+    setLoadedFor(forUserKey);
+    setVisits(next);
+    saveVisits(forUserKey, next);
+  }, []);
+
+  return { visits, record, clear, replace };
 }

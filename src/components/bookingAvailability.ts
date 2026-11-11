@@ -1,7 +1,7 @@
 import type { Booking } from './BookingForm';
 
-function toMinutes(time: string): number {
-  const match = /^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i.exec(time.trim());
+export function timeToMinutes(time: string): number {
+  const match = /^(\d{1,2}):(\d{2})(?::\d{2})?(?:\s*(AM|PM))?$/i.exec(time.trim());
   if (!match) return Number.NaN;
 
   let hours = Number(match[1]);
@@ -19,8 +19,17 @@ function toMinutes(time: string): number {
   return hours * 60 + minutes;
 }
 
+export function bookingDurationMinutes(booking: Booking): number {
+  const start = timeToMinutes(booking.startTime);
+  const end = timeToMinutes(booking.endTime);
+
+  return Number.isFinite(start) && Number.isFinite(end) && end > start
+    ? end - start
+    : 0;
+}
+
 export function bookingEndDate(booking: Booking): Date | undefined {
-  const minutes = toMinutes(booking.endTime);
+  const minutes = timeToMinutes(booking.endTime);
   if (!Number.isFinite(minutes)) return undefined;
 
   const isoDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(booking.date);
@@ -43,8 +52,8 @@ export function findConfirmedBookingConflict(
   candidate: Booking,
   bookings: Booking[],
 ): Booking | undefined {
-  const candidateStart = toMinutes(candidate.startTime);
-  const candidateEnd = toMinutes(candidate.endTime);
+  const candidateStart = timeToMinutes(candidate.startTime);
+  const candidateEnd = timeToMinutes(candidate.endTime);
 
   if (!Number.isFinite(candidateStart) || !Number.isFinite(candidateEnd)) {
     return undefined;
@@ -60,8 +69,8 @@ export function findConfirmedBookingConflict(
       return false;
     }
 
-    const bookedStart = toMinutes(booking.startTime);
-    const bookedEnd = toMinutes(booking.endTime);
+    const bookedStart = timeToMinutes(booking.startTime);
+    const bookedEnd = timeToMinutes(booking.endTime);
 
     return (
       Number.isFinite(bookedStart) &&

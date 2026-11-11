@@ -138,7 +138,7 @@ export default function Login({
           {(formError || error) && <p className="login-error" role="alert">{formError || error}</p>}
           {!creatingAccount && (
             <p className="login-admin-hint">
-              Admin demo: admin@courtconnect.com · admin123
+              Administrator access is assigned to accounts in Supabase.
             </p>
           )}
 

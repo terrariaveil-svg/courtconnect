@@ -5,15 +5,26 @@ import type { ApprovalStatus } from './approval';
 import type { ClubEvent } from './eventsList';
 import { findConfirmedBookingConflict } from './bookingAvailability';
 import type { Facility } from './AvailableSpaces';
+import type { CourtRequest, CourtRequestStatus } from './courtRequests';
 
 type AdminDashboardProps = {
   bookings: Booking[];
   courts: Facility[];
+  courtRequests: CourtRequest[];
   courtStorageError: string;
+  courtRequestStorageError: string;
   events: ClubEvent[];
   registrations: Record<number, number>;
   registrationStatuses: Record<number, ApprovalStatus>;
-  onAddCourt: (court: Omit<Facility, 'id'>) => boolean;
+  onAddCourt: (court: Omit<Facility, 'id'>) => boolean | Promise<boolean>;
+  onDeleteCourt: (id: number) => boolean | Promise<boolean>;
+  onCourtRequestStatusChange: (
+    id: number,
+    status: CourtRequestStatus,
+  ) => boolean | Promise<boolean>;
+  onRefreshData: () => Promise<void>;
+  onImportLegacy: () => Promise<void>;
+  importStatus: string;
   onBookingStatusChange: (id: number, status: ApprovalStatus) => void;
   onRegistrationStatusChange: (id: number, status: ApprovalStatus) => void;
   onSignOut: () => void;
@@ -22,11 +33,18 @@ type AdminDashboardProps = {
 export default function AdminDashboard({
   bookings,
   courts,
+  courtRequests,
   courtStorageError,
+  courtRequestStorageError,
   events,
   registrations,
   registrationStatuses,
   onAddCourt,
+  onDeleteCourt,
+  onCourtRequestStatusChange,
+  onRefreshData,
+  onImportLegacy,
+  importStatus,
   onBookingStatusChange,
   onRegistrationStatusChange,
   onSignOut,
@@ -38,6 +56,9 @@ export default function AdminDashboard({
   const [courtDescription, setCourtDescription] = useState('');
   const [courtImage, setCourtImage] = useState<File | null>(null);
   const [courtFormError, setCourtFormError] = useState('');
+  const [courtActionError, setCourtActionError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [importing, setImporting] = useState(false);
   const pendingBookings = bookings.filter((booking) => booking.status === 'Pending');
   const completedBookings = bookings.filter((booking) => booking.status === 'Done');
   const pendingRegistrations = events.filter(
@@ -45,6 +66,49 @@ export default function AdminDashboard({
       registrations[event.id] > 0 &&
       registrationStatuses[event.id] === 'Pending',
   );
+  const pendingCourtRequests = courtRequests.filter(
+    (request) => request.status === 'Pending',
+  );
+
+  async function changeCourtRequestStatus(id: number, status: CourtRequestStatus) {
+    const changed = await onCourtRequestStatusChange(id, status);
+    setCourtActionError(
+      changed ? '' : 'The court request could not be updated. Check available storage and try again.',
+    );
+  }
+
+  async function deleteCourt(court: Facility) {
+    if (!window.confirm(`Delete "${court.name}" from the available courts?`)) {
+      return;
+    }
+
+    const deleted = await onDeleteCourt(court.id);
+    setCourtActionError(
+      deleted ? '' : 'The court could not be deleted. Check available storage and try again.',
+    );
+  }
+
+  async function refreshData() {
+    setRefreshing(true);
+    try {
+      await onRefreshData();
+    } catch (error) {
+      setCourtActionError(
+        error instanceof Error ? error.message : 'Unable to refresh data from Supabase.',
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  async function importLegacy() {
+    setImporting(true);
+    try {
+      await onImportLegacy();
+    } finally {
+      setImporting(false);
+    }
+  }
 
   async function submitCourt(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -75,7 +139,7 @@ export default function AdminDashboard({
         reader.readAsDataURL(courtImage);
       });
 
-      const added = onAddCourt({
+      const added = await onAddCourt({
         name: courtName.trim(),
         type: courtType,
         location: courtLocation.trim(),
@@ -111,17 +175,28 @@ export default function AdminDashboard({
           <h1>Approval dashboard</h1>
           <p>Review client booking and event registration requests.</p>
         </div>
-        <button type="button" className="admin-signout" onClick={onSignOut}>
-          Sign out
-        </button>
+        <div className="admin-header-actions">
+          <button type="button" className="admin-refresh" onClick={importLegacy} disabled={importing}>
+            {importing ? 'Importing…' : 'Import old browser data'}
+          </button>
+          <button type="button" className="admin-refresh" onClick={refreshData} disabled={refreshing}>
+            {refreshing ? 'Refreshing…' : 'Refresh data'}
+          </button>
+          <button type="button" className="admin-signout" onClick={onSignOut}>
+            Sign out
+          </button>
+        </div>
       </header>
 
       <section className="admin-section" aria-labelledby="admin-courts-title">
+        {importStatus && <p className="admin-empty" role="status">{importStatus}</p>}
         <div className="admin-section-heading">
-          <h2 id="admin-courts-title">Add a court</h2>
+          <h2 id="admin-courts-title">Manage courts</h2>
           <span>{courts.length} courts available</span>
         </div>
         {courtStorageError && <p className="admin-form-error" role="alert">{courtStorageError}</p>}
+        {courtRequestStorageError && <p className="admin-form-error" role="alert">{courtRequestStorageError}</p>}
+        {courtActionError && <p className="admin-form-error" role="alert">{courtActionError}</p>}
         <form className="admin-court-form" onSubmit={submitCourt}>
           <label>
             Court name
@@ -183,6 +258,55 @@ export default function AdminDashboard({
                 <img src={court.image} alt="" />
                 <span><strong>{court.name}</strong>{court.location}</span>
                 <strong>₱{court.price} / hour</strong>
+                <button
+                  type="button"
+                  className="admin-delete-court"
+                  onClick={() => deleteCourt(court)}
+                  aria-label={`Delete ${court.name}`}
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="admin-section" aria-labelledby="admin-court-requests-title">
+        <div className="admin-section-heading">
+          <h2 id="admin-court-requests-title">Court addition requests</h2>
+          <span>{pendingCourtRequests.length} pending</span>
+        </div>
+        {pendingCourtRequests.length === 0 ? (
+          <p className="admin-empty">No court requests need approval.</p>
+        ) : (
+          <ul className="admin-list">
+            {pendingCourtRequests.map((request) => (
+              <li className="admin-request" key={request.id}>
+                <div className="admin-request-info">
+                  <strong>{request.name}</strong>
+                  <span>{request.requesterName} · {request.requesterEmail}</span>
+                  <span>{request.type} · {request.location}</span>
+                  <span>₱{request.price} / hour</span>
+                  <span>{request.description}</span>
+                  <img className="admin-request-image" src={request.image} alt={`${request.name} court`} />
+                </div>
+                <div className="admin-actions">
+                  <button
+                    type="button"
+                    className="admin-approve"
+                    onClick={() => changeCourtRequestStatus(request.id, 'Confirmed')}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-reject"
+                    onClick={() => changeCourtRequestStatus(request.id, 'Rejected')}
+                  >
+                    Reject
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

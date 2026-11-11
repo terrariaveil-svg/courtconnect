@@ -3,6 +3,7 @@ import type { Booking } from "./BookingForm";
 
 export interface Facility {
   id: number;
+  ownerId?: string | null;
   name: string;
   type: string;
   location: string;
@@ -14,7 +15,7 @@ export interface Facility {
 interface Props {
   facility: Facility;
   onBook?: (facility: Facility) => void;
-  onRent?: (booking: Booking) => void;
+  onRent?: (booking: Booking) => void | Promise<void>;
   userName?: string;
   unreadCount?: number;
   onBack?: () => void;
@@ -35,6 +36,7 @@ export default function AvailableSpaces({
 }: Props) {
   return (
     <VenueDetail
+      key={facility.id}
       facility={facility}
       userName={userName}
       unreadCount={unreadCount}
@@ -43,7 +45,7 @@ export default function AvailableSpaces({
       onOpenBookings={onOpenBookings}
       onRent={(booking) => {
         if (onRent) {
-          onRent(booking);
+          return onRent(booking);
         } else {
           onBook?.(facility);
         }

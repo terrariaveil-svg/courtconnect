@@ -1,9 +1,36 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import './VenueDetail.css';
 import TopNav from './TopNav';
 import type { Facility } from './AvailableSpaces';
 import type { Booking } from './BookingForm';
 import { todayISO } from './eventsList';
+import { timeToMinutes } from './bookingAvailability';
+import { requireSupabase } from '../lib/supabase';
+
+type BookingAvailability = {
+  facility_id: number;
+  start_time: string;
+  end_time: string;
+  status: string;
+};
+
+function availabilityErrorMessage(error: unknown): string {
+  const message =
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof error.message === 'string'
+      ? error.message
+      : '';
+
+  if (/auth session missing|session.*not found/i.test(message)) {
+    return 'Your sign-in session has expired. Sign out and sign in again to check availability.';
+  }
+
+  return message
+    ? `Availability check failed: ${message}`
+    : 'Availability could not be checked. Try again shortly.';
+}
 
 type VenueDetailProps = {
   facility: Facility;
@@ -23,7 +50,7 @@ type VenueDetailProps = {
   onOpenSpaces?: () => void;
   onOpenEvents?: () => void;
   onOpenNotifications?: () => void;
-  onRent: (booking: Booking) => void;
+  onRent: (booking: Booking) => void | Promise<void>;
 };
 
 const SLOTS = [
@@ -174,6 +201,12 @@ export default function VenueDetail({
 }: VenueDetailProps) {
   const [slot, setSlot] = useState(SLOTS[0]);
   const [imageIndex, setImageIndex] = useState(0);
+  const [now, setNow] = useState(() => new Date());
+  const [busySlots, setBusySlots] = useState<BookingAvailability[]>([]);
+  const [availabilityLoaded, setAvailabilityLoaded] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState('');
+  const [slotMessage, setSlotMessage] = useState('');
+  const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
 
   // Only scroll to the top when the selected facility changes.
   // Do NOT record a recent visit here.
@@ -182,8 +215,6 @@ export default function VenueDetail({
       top: 0,
       behavior: 'auto',
     });
-
-    setImageIndex(0);
   }, [facility.id]);
 
   const isGym = facility.type === 'Gym floor';
@@ -198,7 +229,7 @@ export default function VenueDetail({
     ),
   ];
 
-  const today = new Date();
+  const today = now;
   const bookingDate = todayISO();
 
   const shortDate = today.toLocaleDateString('en-US', {
@@ -218,16 +249,122 @@ export default function VenueDetail({
     'Friendly Community',
   ];
 
-  const rent = () => {
-    onRent({
-      id: Date.now(),
-      facility,
-      date: bookingDate,
-      startTime: slot,
-      endTime: addHour(slot),
-      customer: userName,
-      status: 'Pending',
+  const refreshAvailability = useCallback(async () => {
+    try {
+      const { data, error } = await requireSupabase().rpc(
+        'get_booking_availability',
+        { target_date: bookingDate },
+      );
+      if (error) throw error;
+
+      setBusySlots((data ?? []) as BookingAvailability[]);
+      setAvailabilityError('');
+    } catch (error) {
+      console.error('Unable to load court booking availability.', error);
+      setAvailabilityError(availabilityErrorMessage(error));
+    } finally {
+      setAvailabilityLoaded(true);
+    }
+  }, [bookingDate]);
+
+  useEffect(() => {
+    let active = true;
+    let requestInFlight = false;
+
+    const refresh = async () => {
+      if (requestInFlight || !active) return;
+      requestInFlight = true;
+      try {
+        await refreshAvailability();
+      } finally {
+        requestInFlight = false;
+      }
+    };
+
+    void refresh();
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void refresh();
+    }, 5_000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') void refresh();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refreshAvailability]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNow(new Date()), 15_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  const isSlotUnavailable = (label: string, checkedAt = now) => {
+    const start = timeToMinutes(label);
+    const end = timeToMinutes(addHour(label));
+    const selectedDay = new Date(`${bookingDate}T00:00:00`);
+    const todayDate = new Date(
+      checkedAt.getFullYear(),
+      checkedAt.getMonth(),
+      checkedAt.getDate(),
+    );
+    const isPast =
+      selectedDay.getTime() < todayDate.getTime() ||
+      (selectedDay.getTime() === todayDate.getTime() &&
+        start <= checkedAt.getHours() * 60 + checkedAt.getMinutes());
+    const isBooked = busySlots.some((booking) => {
+      const bookedStart = timeToMinutes(booking.start_time);
+      const bookedEnd = timeToMinutes(booking.end_time);
+      return (
+        Number(booking.facility_id) === facility.id &&
+        (booking.status === 'Pending' || booking.status === 'Confirmed') &&
+        Number.isFinite(bookedStart) &&
+        Number.isFinite(bookedEnd) &&
+        start < bookedEnd &&
+        bookedStart < end
+      );
     });
+
+    return isPast || isBooked;
+  };
+
+  const firstAvailableSlot = SLOTS.find((candidate) => !isSlotUnavailable(candidate));
+  const activeSlot = isSlotUnavailable(slot) ? firstAvailableSlot ?? slot : slot;
+
+  const rent = async () => {
+    if (!availabilityLoaded || availabilityError) {
+      setSlotMessage('Availability is still being checked. Please try again.');
+      return;
+    }
+    if (isSlotUnavailable(activeSlot)) {
+      setSlotMessage('This court and time are unavailable. Choose another slot.');
+      void refreshAvailability();
+      return;
+    }
+
+    setIsSubmittingBooking(true);
+    setSlotMessage('');
+    try {
+      await onRent({
+        id: Date.now(),
+        facility,
+        date: bookingDate,
+        startTime: activeSlot,
+        endTime: addHour(activeSlot),
+        customer: userName,
+        status: 'Pending',
+      });
+    } catch (error) {
+      setSlotMessage(
+        error instanceof Error ? error.message : 'Unable to save this booking.',
+      );
+      void refreshAvailability();
+    } finally {
+      setIsSubmittingBooking(false);
+    }
   };
 
   const prev = () => {
@@ -405,19 +542,37 @@ export default function VenueDetail({
             </div>
 
             <div className="vd-slots" role="radiogroup" aria-label="Open time slots">
-              {SLOTS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  role="radio"
-                  aria-checked={slot === s}
-                  className={`vd-slot${slot === s ? ' is-selected' : ''}`}
-                  onClick={() => setSlot(s)}
-                >
-                  {s}
-                </button>
-              ))}
+              {SLOTS.map((s) => {
+                const unavailable = isSlotUnavailable(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    role="radio"
+                    aria-checked={activeSlot === s}
+                    aria-disabled={unavailable}
+                    aria-label={`${s}${unavailable ? ', unavailable' : ', available'}`}
+                    className={`vd-slot${activeSlot === s ? ' is-selected' : ''}${unavailable ? ' is-unavailable' : ''}`}
+                    onClick={() => {
+                      if (unavailable) {
+                        setSlotMessage('This court and time are unavailable. Choose another slot.');
+                        return;
+                      }
+                      setSlot(s);
+                      setSlotMessage('');
+                    }}
+                  >
+                    {s}
+                    {unavailable && <span className="vd-slot-unavailable-label">Unavailable</span>}
+                  </button>
+                );
+              })}
             </div>
+            <p className="vd-slot-status" role="status">
+              {availabilityError ||
+                slotMessage ||
+                (availabilityLoaded ? '' : 'Checking availability…')}
+            </p>
 
             <div className="vd-divider" />
 
@@ -432,15 +587,25 @@ export default function VenueDetail({
             </div>
 
             <p className="vd-selected">
-              Selected: {slot} – {addHour(slot)}
+              Selected: {activeSlot} – {addHour(activeSlot)}
             </p>
 
-            <button type="button" className="vd-rent" onClick={rent}>
+            <button
+              type="button"
+              className="vd-rent"
+              onClick={() => void rent()}
+              disabled={
+                isSubmittingBooking ||
+                !availabilityLoaded ||
+                Boolean(availabilityError) ||
+                isSlotUnavailable(activeSlot)
+              }
+            >
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="5" width="18" height="16" rx="2" />
                 <path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4" />
               </svg>
-              Rent
+              {isSubmittingBooking ? 'Booking…' : 'Rent'}
             </button>
           </aside>
         </div>
