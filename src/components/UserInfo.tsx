@@ -267,10 +267,15 @@ export default function UserInfo({
             <p className="user-courts-help">You can edit or remove only courts approved from your requests.</p>
             {courtError && <p className="user-courts-error" role="alert">{courtError}</p>}
             <ul className="user-court-list">
-              {courts.map((court) => (
-                <li key={court.id} className="user-court-item">
-                  <img src={court.image} alt="" />
-                  {editingCourtId === court.id ? (
+              {courts.map((court) => {
+                const courtBookings = bookings.filter(
+                  (booking) => booking.facility.id === court.id,
+                );
+
+                return (
+                  <li key={court.id} className="user-court-item">
+                    <img src={court.image} alt="" />
+                    {editingCourtId === court.id ? (
                     <form className="user-court-form" onSubmit={(event) => void saveCourt(event, court)}>
                       <label>
                         Court name
@@ -329,25 +334,46 @@ export default function UserInfo({
                         </button>
                       </div>
                     </form>
-                  ) : (
-                    <>
-                      <span className="user-court-details">
-                        <strong>{court.name}</strong>
-                        <span>{court.type} · {court.location}</span>
-                        <span>₱{court.price} / hour</span>
-                      </span>
-                      <div className="user-court-actions">
-                        {onUpdateCourt && (
-                          <button type="button" onClick={() => beginCourtEdit(court)}>Edit</button>
-                        )}
-                        {onDeleteCourt && (
-                          <button type="button" onClick={() => void deleteOwnedCourt(court)}>Delete</button>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </li>
-              ))}
+                    ) : (
+                      <>
+                        <div className="user-court-content">
+                          <span className="user-court-details">
+                            <strong>{court.name}</strong>
+                            <span>{court.type} · {court.location}</span>
+                            <span>₱{court.price} / hour</span>
+                          </span>
+                          <div className="user-court-actions">
+                            {onUpdateCourt && (
+                              <button type="button" onClick={() => beginCourtEdit(court)}>Edit</button>
+                            )}
+                            {onDeleteCourt && (
+                              <button type="button" onClick={() => void deleteOwnedCourt(court)}>Delete</button>
+                            )}
+                          </div>
+                        </div>
+                        <div className="user-court-bookings">
+                          <strong>Bookings ({courtBookings.length})</strong>
+                          {courtBookings.length === 0 ? (
+                            <span>No bookings yet.</span>
+                          ) : (
+                            <ul>
+                              {courtBookings.map((booking) => (
+                                <li key={booking.id}>
+                                  <span>{booking.customer}</span>
+                                  <span>{booking.date} · {booking.startTime}–{booking.endTime}</span>
+                                  <span className={`user-court-booking-status user-court-booking-status-${booking.status.toLowerCase()}`}>
+                                    {booking.status}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </section>
         )}

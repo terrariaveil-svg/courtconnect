@@ -226,6 +226,16 @@ create policy "Admins update court requests"
 create policy "Users read own bookings and admins read all"
   on public.bookings for select to authenticated
   using (user_id = (select auth.uid()) or (select public.is_admin()));
+create policy "Court owners read bookings for owned facilities"
+  on public.bookings for select to authenticated
+  using (
+    exists (
+      select 1
+      from public.facilities as facility
+      where facility.owner_id = (select auth.uid())
+        and facility.id::text = bookings.facility ->> 'id'
+    )
+  );
 create policy "Users create own bookings"
   on public.bookings for insert to authenticated
   with check (user_id = (select auth.uid()) and status = 'Pending');

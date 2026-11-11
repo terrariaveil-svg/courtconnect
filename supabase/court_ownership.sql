@@ -68,6 +68,18 @@ create policy "Owners and admins delete facilities"
   on public.facilities for delete to authenticated
   using ((select public.is_admin()) or owner_id = (select auth.uid()));
 
+drop policy if exists "Court owners read bookings for owned facilities" on public.bookings;
+create policy "Court owners read bookings for owned facilities"
+  on public.bookings for select to authenticated
+  using (
+    exists (
+      select 1
+      from public.facilities as facility
+      where facility.owner_id = (select auth.uid())
+        and facility.id::text = bookings.facility ->> 'id'
+    )
+  );
+
 revoke update on public.facilities from authenticated;
 grant update (name, type, location, price, image, description)
   on public.facilities to authenticated;

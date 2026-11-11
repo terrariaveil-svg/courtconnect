@@ -266,6 +266,63 @@
   font-size: 15px;
 }
 
+.user-court-content {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.user-court-bookings {
+  display: grid;
+  flex-basis: 100%;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e1e9ec;
+  color: #687986;
+  font-size: 13px;
+}
+
+.user-court-bookings > strong {
+  color: #10253a;
+}
+
+.user-court-bookings ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.user-court-bookings li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 14px;
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: #f5f8f9;
+}
+
+.user-court-booking-status {
+  font-weight: 700;
+}
+
+.user-court-booking-status-confirmed,
+.user-court-booking-status-done {
+  color: #18794e;
+}
+
+.user-court-booking-status-pending {
+  color: #a15c00;
+}
+
+.user-court-booking-status-rejected {
+  color: #b42318;
+}
+
 .user-court-actions {
   display: flex;
   flex-wrap: wrap;
@@ -368,6 +425,10 @@
     width: 100%;
   }
   .user-court-item {
+    flex-wrap: wrap;
+  }
+  .user-court-content {
+    flex-basis: calc(100% - 90px);
     flex-wrap: wrap;
   }
   .user-court-form {
