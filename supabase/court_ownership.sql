@@ -58,6 +58,8 @@ where facility.id = matched_court.facility_id
 
 drop policy if exists "Admins update facilities" on public.facilities;
 drop policy if exists "Admins delete facilities" on public.facilities;
+drop policy if exists "Owners and admins update facilities" on public.facilities;
+drop policy if exists "Owners and admins delete facilities" on public.facilities;
 create policy "Owners and admins update facilities"
   on public.facilities for update to authenticated
   using ((select public.is_admin()) or owner_id = (select auth.uid()))

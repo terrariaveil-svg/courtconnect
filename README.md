@@ -48,6 +48,19 @@ The root `.env.local` is still needed for Supabase Auth in the browser. The brow
 
 The app refuses local-only sign-in when Supabase is not configured. Sign-up, password reset, profiles, bookings, custom courts, court requests, events, event registrations, and recent visits use Supabase. Supabase Realtime updates loaded records when subscribed tables change, with a 15-second refresh fallback while signed in; Vite's development server also hot-reloads frontend code changes. Row-level security restricts personal records to their owner and administrative operations to accounts with the `admin` profile role.
 
+## Deploy
+
+This repository includes a Render Blueprint in [`render.yaml`](./render.yaml) for a static frontend and a FastAPI web service. In Render, choose **New → Blueprint**, connect this repository, and follow the prompts for the environment variables marked as secret/manual:
+
+- **Frontend:** set `VITE_SUPABASE_URL` to the Supabase project base URL (without `/rest/v1`), `VITE_SUPABASE_PUBLISHABLE_KEY` to its publishable key, and `VITE_API_URL` to the full HTTPS URL of the deployed `courtconnect-api` service.
+- **Backend:** set `SUPABASE_URL` to the same Supabase project base URL, `SUPABASE_PUBLISHABLE_KEY` to its publishable key, and `FRONTEND_ORIGINS` to the exact HTTPS URL of the deployed `courtconnect` static site (no trailing slash).
+
+After both services are created, update the two Render URLs in their environment variables if needed and trigger a frontend redeploy so its API URL is compiled into the Vite build. Verify the backend's `/health` endpoint responds with `{"status":"ok"}`.
+
+- **Secrets:** the Supabase publishable key is intended for browser use and is embedded in the frontend build. Never use a database password or `service_role`/secret key in a `VITE_` variable.
+- **Supabase Auth:** set the production frontend URL as the Site URL and add the production URL and any required password-reset or email-confirmation callback URLs to the allowed redirect URLs.
+- **Database:** apply the schema and migrations described above to the same Supabase project used by both services before enabling bookings, court ownership, profile address editing, or realtime updates.
+
 ## Import existing browser records
 
 After signing in with a Supabase account, open the profile and choose **Import records from this browser**. The one-time import transfers that browser's recent visits and the signed-in user's court requests. An administrator can also import custom courts saved in that browser. Requests are imported as pending and must be approved again.

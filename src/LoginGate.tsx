@@ -64,7 +64,11 @@ function getErrorMessage(error: unknown, fallback: string): string {
     'message' in error &&
     typeof error.message === 'string'
   ) {
-    return error.message;
+    const code =
+      'code' in error && typeof error.code === 'string'
+        ? ` (${error.code})`
+        : '';
+    return `${error.message}${code}`;
   }
   return fallback;
 }
@@ -496,9 +500,10 @@ export default function LoginGate() {
 
       activeUserId.current = null;
       setLoginError(
-        error instanceof Error
-          ? error.message
-          : 'Unable to load your account data from Supabase.',
+        getErrorMessage(
+          error,
+          'Unable to load your account data from Supabase.',
+        ),
       );
       setScreen('login');
     }
