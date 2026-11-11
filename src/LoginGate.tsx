@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
+import ForgotPassword from './components/ForgotPassword';
 import LoadingScreen from './components/LoadingScreen';
 import HomePage from './components/HomePage';
 import UserInfo from './components/UserInfo';
@@ -31,10 +32,22 @@ import { INITIAL_REMINDERS } from './components/remindersData';
 import type { Reminder } from './components/remindersData';
 import { useRecentVisits } from './components/useRecentVisits';
 import type { Visit } from './components/recentVisits';
+import {
+  MAX_ATTEMPTS,
+  MIN_PASSWORD,
+  RESET_MINUTES,
+  makeResetCode,
+} from './components/passwordReset';
+import type {
+  PendingReset,
+  RequestResult,
+  ResetResult,
+} from './components/passwordReset';
 
 type Screen =
   | 'loading'
   | 'login'
+  | 'forgot'
   | 'admin'
   | 'home'
   | 'profile'
@@ -207,6 +220,7 @@ export default function LoginGate() {
 
   const [screen, setScreen] = useState<Screen>('loading');
   const [loginError, setLoginError] = useState('');
+  const [reset, setReset] = useState<PendingReset | null>(null);
   const [userName, setUserName] = useState('Alex');
   const [userEmail, setUserEmail] = useState('guest');
   const [notices, setNotices] = useState<Notice[]>(INITIAL_NOTICES);
@@ -441,6 +455,151 @@ export default function LoginGate() {
     }
   };
 
+  // Forgot password, step 1: make a reset code for an existing account.
+  // There is no email server, so the code is returned and shown on screen.
+  const requestPasswordReset = (email: string): RequestResult => {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      return { ok: false, error: 'Please enter your email address.' };
+    }
+
+    if (normalizedEmail === adminEmail) {
+      return {
+        ok: false,
+        error: 'The administrator password cannot be reset here.',
+      };
+    }
+
+    try {
+      const found = getClientAccounts().some(
+        (account) => account.email === normalizedEmail,
+      );
+
+      if (!found) {
+        return {
+          ok: false,
+          error: 'No account was found with that email. Create an account first.',
+        };
+      }
+    } catch (error) {
+      console.error('Unable to check the saved accounts.', error);
+
+      return {
+        ok: false,
+        error: 'Unable to check your account on this device. Please try again.',
+      };
+    }
+
+    const code = makeResetCode();
+
+    setReset({
+      email: normalizedEmail,
+      code,
+      expiresAt: Date.now() + RESET_MINUTES * 60_000,
+      attempts: 0,
+    });
+
+    return { ok: true, code };
+  };
+
+  // Forgot password, step 2: check the code and save the new password.
+  const resetPassword = async (
+    code: string,
+    newPassword: string,
+  ): Promise<ResetResult> => {
+    if (!reset) {
+      return {
+        ok: false,
+        error: 'Please request a new code.',
+        restart: true,
+      };
+    }
+
+    if (Date.now() > reset.expiresAt) {
+      setReset(null);
+
+      return {
+        ok: false,
+        error: 'That code has expired. Please request a new one.',
+        restart: true,
+      };
+    }
+
+    if (newPassword.length < MIN_PASSWORD) {
+      return {
+        ok: false,
+        error: `Your new password must be at least ${MIN_PASSWORD} characters.`,
+      };
+    }
+
+    if (code !== reset.code) {
+      const attempts = reset.attempts + 1;
+
+      if (attempts >= MAX_ATTEMPTS) {
+        setReset(null);
+
+        return {
+          ok: false,
+          error: 'Too many wrong codes. Please request a new one.',
+          restart: true,
+        };
+      }
+
+      setReset({ ...reset, attempts });
+
+      const left = MAX_ATTEMPTS - attempts;
+
+      return {
+        ok: false,
+        error: `That code is not right. ${left} ${left === 1 ? 'try' : 'tries'} left.`,
+      };
+    }
+
+    try {
+      const accounts = getClientAccounts();
+      const index = accounts.findIndex(
+        (account) => account.email === reset.email,
+      );
+
+      if (index === -1) {
+        setReset(null);
+
+        return {
+          ok: false,
+          error: 'That account could not be found. Please request a new code.',
+          restart: true,
+        };
+      }
+
+      const salt = window.crypto.getRandomValues(new Uint8Array(16));
+
+      const updated: ClientAccount = {
+        ...accounts[index],
+        passwordSalt: toHex(salt),
+        passwordHash: await hashPassword(newPassword, salt),
+      };
+
+      window.localStorage.setItem(
+        CLIENT_ACCOUNTS_KEY,
+        JSON.stringify(
+          accounts.map((account, i) => (i === index ? updated : account)),
+        ),
+      );
+
+      setReset(null);
+
+      return { ok: true };
+    } catch (error) {
+      console.error('Unable to save the new password.', error);
+
+      return {
+        ok: false,
+        error: 'Unable to save the new password on this device. Please try again.',
+      };
+    }
+  };
+
   const handleSignOut = () => {
     setLastBooking(null);
     setEventId(null);
@@ -660,7 +819,26 @@ export default function LoginGate() {
       <Login
         onLogin={handleLogin}
         onCreateAccount={handleCreateAccount}
+        onForgotPassword={() => {
+          setLoginError('');
+          setReset(null);
+          setScreen('forgot');
+        }}
         error={loginError}
+      />
+    );
+  }
+
+  if (screen === 'forgot') {
+    return (
+      <ForgotPassword
+        onRequestCode={requestPasswordReset}
+        onReset={resetPassword}
+        onBack={() => {
+          setReset(null);
+          setLoginError('');
+          setScreen('login');
+        }}
       />
     );
   }

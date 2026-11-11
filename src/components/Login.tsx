@@ -6,10 +6,16 @@ import logo from '../assets/courtconnect-logo.png';
 type LoginProps = {
   onLogin: (email: string, password: string) => Promise<void>;
   onCreateAccount: (name: string, email: string, password: string) => Promise<void>;
+  onForgotPassword?: () => void;
   error?: string;
 };
 
-export default function Login({ onLogin, onCreateAccount, error }: LoginProps) {
+export default function Login({
+  onLogin,
+  onCreateAccount,
+  error,
+  onForgotPassword,
+}: LoginProps) {
   const [creatingAccount, setCreatingAccount] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -122,6 +128,12 @@ export default function Login({ onLogin, onCreateAccount, error }: LoginProps) {
           <button type="submit" className="login-button" disabled={isSubmitting}>
             {isSubmitting ? 'Please wait…' : creatingAccount ? 'Create Account' : 'Sign In'}
           </button>
+
+          {onForgotPassword && (
+            <button type="button" className="forgot-link" onClick={onForgotPassword}>
+              Forgot password?
+            </button>
+          )}
 
           {(formError || error) && <p className="login-error" role="alert">{formError || error}</p>}
           {!creatingAccount && (
