@@ -10,8 +10,9 @@ interface Props {
 export default function MyBookings({ bookings, onCancel }: Props) {
   // Which booking is waiting for "are you sure?"
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const visibleBookings = bookings.filter((booking) => booking.status !== "Rejected");
 
-  const totalSpend = bookings
+  const totalSpend = visibleBookings
     .filter((booking) => booking.status === "Confirmed" || booking.status === "Done")
     .reduce((sum, booking) => sum + booking.facility.price, 0);
 
@@ -22,11 +23,11 @@ export default function MyBookings({ bookings, onCancel }: Props) {
         <h1 className="mb-title">My Bookings</h1>
         <p className="mb-sub">View your reserved facilities and scheduled playing times.</p>
 
-        {bookings.length > 0 && (
+        {visibleBookings.length > 0 && (
           <div className="mb-summary">
             <div className="mb-stat">
               <span>Total bookings</span>
-              <strong>{bookings.length}</strong>
+              <strong>{visibleBookings.length}</strong>
             </div>
             <div className="mb-stat">
               <span>Total price</span>
@@ -35,7 +36,7 @@ export default function MyBookings({ bookings, onCancel }: Props) {
           </div>
         )}
 
-        {bookings.length === 0 ? (
+        {visibleBookings.length === 0 ? (
           <div className="mb-empty">
             <span className="mb-empty-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -48,7 +49,7 @@ export default function MyBookings({ bookings, onCancel }: Props) {
           </div>
         ) : (
           <ul className="mb-list">
-            {bookings.map((booking) => (
+            {visibleBookings.map((booking) => (
               <li className="mb-card" key={booking.id}>
                 <img src={booking.facility.image} alt="" className="mb-img" />
 

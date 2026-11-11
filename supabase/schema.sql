@@ -239,9 +239,9 @@ create policy "Users cancel own pending bookings and admins update bookings"
     user_id = (select auth.uid()) and status = 'Pending'
     or (select public.is_admin())
   );
-create policy "Users cancel own pending bookings"
+create policy "Users delete own bookings"
   on public.bookings for delete to authenticated
-  using (user_id = (select auth.uid()) and status = 'Pending');
+  using (user_id = (select auth.uid()));
 
 create policy "Authenticated users read events"
   on public.events for select to authenticated using (true);

@@ -1219,11 +1219,18 @@ export default function LoginGate() {
   const cancelBooking = (id: number) => {
     void (async () => {
       try {
-        const { error } = await requireSupabase()
+        const { data, error } = await requireSupabase()
           .from('bookings')
           .delete()
-          .eq('id', id);
+          .eq('id', id)
+          .select('id')
+          .maybeSingle();
         if (error) throw error;
+        if (!data) {
+          throw new Error(
+            'This booking was not removed. Refresh your bookings and try again.',
+          );
+        }
         setBookings((list) => list.filter((booking) => booking.id !== id));
       } catch (error) {
         console.error('Unable to cancel the booking in Supabase.', error);
