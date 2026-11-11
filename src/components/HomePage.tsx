@@ -14,6 +14,7 @@ type HomePageProps = {
   registeredEvents?: ClubEvent[];
   onSignOut?: () => void;
   onExplore?: () => void;
+  onOpenBookings: () => void;
   onEvents?: () => void;
   onOpenProfile: () => void;
   onShowSpaces: (choice: SpaceChoice) => void;
@@ -85,6 +86,7 @@ export default function HomePage({
   registeredEvents = [],
   onSignOut,
   onExplore,
+  onOpenBookings,
   onOpenProfile,
   onShowSpaces,
   onOpenNotifications,
@@ -303,9 +305,9 @@ export default function HomePage({
           <div className="home-actions">
             <button
               className="home-btn-details"
-              onClick={onExplore}
+              onClick={onOpenBookings}
             >
-              Find a court
+              My Bookings
             </button>
 
             <button

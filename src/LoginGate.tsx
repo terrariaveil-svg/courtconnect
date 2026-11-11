@@ -1653,6 +1653,7 @@ export default function LoginGate() {
       onCloseUnreadAlert={() => setToastOpen(false)}
       onSignOut={handleSignOut}
       onOpenProfile={() => setScreen('profile')}
+      onOpenBookings={() => setScreen('mybookings')}
       onViewDetails={() => setScreen('activity')}
       onOpenNotifications={() => setScreen('notifications')}
       onShowSpaces={openSpaces}
