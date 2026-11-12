@@ -339,7 +339,6 @@ export default function LoginGate() {
     setUserEmail(account.email ?? '');
     setRegisteredAt(account.created_at);
     setUserAddress(profile.address ?? '');
-    onProfileLoaded?.(isAccountAdmin);
 
     const [
       facilityResult,
@@ -500,6 +499,7 @@ export default function LoginGate() {
       importResult.data ? 'Records from this browser were already imported.' : '',
     );
 
+    onProfileLoaded?.(isAccountAdmin);
     return { admin: isAccountAdmin };
   }, [replaceVisits]);
 
@@ -1345,39 +1345,43 @@ export default function LoginGate() {
     setScreen('event');
   };
 
-  const createEvent = (data: NewEvent) => {
-    void (async () => {
-      if (!userId) return;
+  const createEvent = async (data: NewEvent): Promise<void> => {
+    if (!userId) {
+      throw new Error('Your sign-in session is not ready. Please sign out and sign in again.');
+    }
 
-      const event = makeEvent(Date.now(), data);
-      try {
-        const { data: saved, error } = await requireSupabase()
-          .from('events')
-          .insert({
-            name: event.name,
-            category: event.category,
-            event_date: event.date,
-            event_time: event.time,
-            venue: event.venue,
-            city: event.city,
-            price: event.price,
-            capacity: event.capacity,
-            spots_left: event.spotsLeft,
-            organizer: event.organizer,
-            description: event.description,
-            image: event.image,
-            created_by: userId,
-          })
-          .select('id')
-          .single();
-        if (error) throw error;
+    const event = makeEvent(Date.now(), data);
+    try {
+      const { data: saved, error } = await requireSupabase()
+        .from('events')
+        .insert({
+          name: event.name,
+          category: event.category,
+          event_date: event.date,
+          event_time: event.time,
+          venue: event.venue,
+          city: event.city,
+          price: event.price,
+          capacity: event.capacity,
+          spots_left: event.spotsLeft,
+          organizer: event.organizer,
+          description: event.description,
+          image: event.image,
+          created_by: userId,
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      if (!saved) throw new Error('Supabase did not return the saved event.');
 
-        setEvents((list) => [{ ...event, id: Number(saved.id) }, ...list]);
-      } catch (error) {
-        console.error('Unable to save the event to Supabase.', error);
-        window.alert(error instanceof Error ? error.message : 'Unable to create the event.');
-      }
-    })();
+      setEvents((list) => [{ ...event, id: Number(saved.id) }, ...list]);
+    } catch (error) {
+      console.error('Unable to save the event to Supabase.', error);
+      throw new Error(
+        getErrorMessage(error, 'Unable to create the event.'),
+        { cause: error },
+      );
+    }
   };
 
   const registerForEvent = (id: number, spots: number) => {
@@ -1528,7 +1532,7 @@ export default function LoginGate() {
   const shell = {
     userName,
     unreadCount,
-    bookingCount: bookings.length,
+    bookingCount: bookings.filter((booking) => booking.status !== 'Rejected').length,
     onHome: () => setScreen('home'),
     onOpenProfile: () => setScreen('profile'),
     onOpenBookings: () => setScreen('mybookings'),

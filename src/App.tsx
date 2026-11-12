@@ -319,7 +319,7 @@ export default function App() {
       <Navbar
         page={page}
         setPage={setPage}
-        bookingCount={bookings.length}
+        bookingCount={bookings.filter((booking) => booking.status !== "Rejected").length}
       />
 
       <main className="main-content">

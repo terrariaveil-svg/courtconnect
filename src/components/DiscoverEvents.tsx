@@ -9,7 +9,7 @@ type DiscoverEventsProps = {
   events: ClubEvent[];
   registrations: Record<number, number>;
   onOpenEvent: (id: number) => void;
-  onCreate: (data: NewEvent) => void;
+  onCreate: (data: NewEvent) => Promise<void>;
 };
 
 const TINT: Record<EventCategory, string> = {
@@ -86,6 +86,7 @@ export default function DiscoverEvents({
   const [fPrice, setFPrice] = useState('0');
   const [fSpots, setFSpots] = useState('20');
   const [fError, setFError] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
 
   const q = query.trim().toLowerCase();
   const upcoming = events.filter((e) => e.date >= today);
@@ -108,32 +109,39 @@ export default function DiscoverEvents({
     setDate(null);
   };
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     const price = Number(fPrice);
     const spots = Number(fSpots);
 
+    setFError('');
     if (!fName.trim()) return setFError('Please enter an event name.');
     if (!fVenue.trim()) return setFError('Please enter where the event is held.');
     if (!fDate || fDate < today) return setFError('Please choose a date that is today or later.');
     if (!Number.isFinite(price) || price < 0) return setFError('Price must be 0 or more.');
     if (!Number.isInteger(spots) || spots < 1) return setFError('Spots must be at least 1.');
 
-    onCreate({
-      name: fName.trim(),
-      category: fCategory,
-      date: fDate,
-      time: fTime.trim() || '9:00 AM – 12:00 PM',
-      venue: fVenue.trim(),
-      price,
-      spots,
-    });
+    setIsCreating(true);
+    try {
+      await onCreate({
+        name: fName.trim(),
+        category: fCategory,
+        date: fDate,
+        time: fTime.trim() || '9:00 AM – 12:00 PM',
+        venue: fVenue.trim(),
+        price,
+        spots,
+      });
 
-    clearFilters();
-    setCreateOpen(false);
-    setFName('');
-    setFVenue('');
-    setFError('');
+      clearFilters();
+      setCreateOpen(false);
+      setFName('');
+      setFVenue('');
+    } catch (error) {
+      setFError(error instanceof Error ? error.message : 'Unable to create the event.');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -374,11 +382,11 @@ export default function DiscoverEvents({
             </div>
 
             <div className="de-modal-actions">
-              <button type="button" className="de-btn-outline" onClick={() => setCreateOpen(false)}>
+              <button type="button" className="de-btn-outline" onClick={() => setCreateOpen(false)} disabled={isCreating}>
                 Cancel
               </button>
-              <button type="submit" className="de-create">
-                Create Event
+              <button type="submit" className="de-create" disabled={isCreating}>
+                {isCreating ? 'Saving…' : 'Create Event'}
               </button>
             </div>
           </form>
