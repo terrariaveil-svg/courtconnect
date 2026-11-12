@@ -242,6 +242,9 @@ export default function LoginGate() {
   const [events, setEvents] = useState<ClubEvent[]>(() => seedEvents());
   const [eventId, setEventId] = useState<number | null>(null);
   const [registrations, setRegistrations] = useState<Record<number, number>>({});
+  const [myEventRegistrations, setMyEventRegistrations] = useState<
+    Record<number, { spots: number; status: ApprovalStatus }>
+  >({});
   const [registrationStatuses, setRegistrationStatuses] =
     useState<Record<number, ApprovalStatus>>({});
 
@@ -454,8 +457,21 @@ export default function LoginGate() {
 
     const registrationCounts: Record<number, number> = {};
     const statuses: Record<number, ApprovalStatus> = {};
+    const accountRegistrations: Record<
+      number,
+      { spots: number; status: ApprovalStatus }
+    > = {};
     registrationRecords.forEach((registration) => {
       const eventKey = Number(registration.event_id);
+      if (
+        registration.user_id === account.id &&
+        registration.status !== 'Rejected'
+      ) {
+        accountRegistrations[eventKey] = {
+          spots: Number(registration.spots),
+          status: registration.status as ApprovalStatus,
+        };
+      }
       if (
         registration.status !== 'Rejected' &&
         (!statuses[eventKey] || registration.status === 'Pending')
@@ -467,6 +483,7 @@ export default function LoginGate() {
         (registrationCounts[eventKey] ?? 0) + registration.spots;
     });
     setRegistrations(registrationCounts);
+    setMyEventRegistrations(accountRegistrations);
     setRegistrationStatuses(statuses);
 
     replaceVisits(
@@ -1374,6 +1391,10 @@ export default function LoginGate() {
 
         setRegistrations((previous) => ({ ...previous, [id]: spots }));
         setRegistrationStatuses((previous) => ({ ...previous, [id]: 'Pending' }));
+        setMyEventRegistrations((previous) => ({
+          ...previous,
+          [id]: { spots, status: 'Pending' },
+        }));
 
         const event = events.find((item) => item.id === id);
         if (event) {
@@ -1426,6 +1447,15 @@ export default function LoginGate() {
         }
 
         setRegistrationStatuses((previous) => ({ ...previous, [id]: status }));
+        setMyEventRegistrations((previous) => {
+          if (!previous[id]) return previous;
+          if (status === 'Rejected') {
+            const next = { ...previous };
+            delete next[id];
+            return next;
+          }
+          return { ...previous, [id]: { ...previous[id], status } };
+        });
         if (status === 'Rejected') {
           setEvents((list) =>
             list.map((item) =>
@@ -1454,10 +1484,10 @@ export default function LoginGate() {
       try {
         const { data, error } = await requireSupabase()
           .from('event_registrations')
-          .select('id, spots')
+          .select('id, spots, status')
           .eq('event_id', id)
           .eq('user_id', userId)
-          .eq('status', 'Pending')
+          .in('status', ['Pending', 'Confirmed'])
           .single();
         if (error) throw error;
 
@@ -1472,6 +1502,11 @@ export default function LoginGate() {
           return next;
         });
         setRegistrationStatuses((previous) => {
+          const next = { ...previous };
+          delete next[id];
+          return next;
+        });
+        setMyEventRegistrations((previous) => {
           const next = { ...previous };
           delete next[id];
           return next;
@@ -1733,6 +1768,8 @@ export default function LoginGate() {
       userName={userName}
       avatarUrl={avatarUrl}
       bookings={bookings}
+      events={events}
+      eventRegistrations={myEventRegistrations}
       unreadCount={unreadCount}
       showUnreadAlert={toastOpen}
       onCloseUnreadAlert={() => setToastOpen(false)}

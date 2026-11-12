@@ -7,11 +7,15 @@ import heroImg from "../assets/tennis-court.png";
 import QuickBook, { type SpaceChoice } from "./QuickBook";
 import type { Booking } from "./BookingForm";
 import { timeToMinutes } from "./bookingAvailability";
+import type { ApprovalStatus } from "./approval";
+import type { ClubEvent } from "./eventsList";
 
 type HomePageProps = {
   userName?: string;
   avatarUrl?: string;
   bookings?: Booking[];
+  events?: ClubEvent[];
+  eventRegistrations?: Record<number, { spots: number; status: ApprovalStatus }>;
   onSignOut?: () => void;
   onExplore?: () => void;
   onOpenBookings: () => void;
@@ -103,6 +107,8 @@ export default function HomePage({
   userName = "Alex",
   avatarUrl,
   bookings = [],
+  events = [],
+  eventRegistrations = {},
   onSignOut,
   onOpenBookings,
   onOpenProfile,
@@ -132,7 +138,7 @@ export default function HomePage({
       ? "Good afternoon"
       : "Good evening";
 
-  const upcomingActivities: UpcomingActivity[] = (bookings ?? [])
+  const courtActivities: UpcomingActivity[] = (bookings ?? [])
     .flatMap((booking) => {
       if (booking.status !== "Confirmed") return [];
 
@@ -167,10 +173,36 @@ export default function HomePage({
         location: booking.facility?.location ?? "CourtConnect Sports Complex",
         type: "Court booking",
       }];
-    })
-    .sort(
-      (a, b) => a.date.getTime() - b.date.getTime()
-    );
+    });
+
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const eventActivities: UpcomingActivity[] = Object.entries(eventRegistrations)
+    .flatMap(([eventId, registration]) => {
+      if (registration.status !== "Pending" && registration.status !== "Confirmed") {
+        return [];
+      }
+
+      const event = events.find((item) => item.id === Number(eventId));
+      if (!event) return [];
+
+      const date = getActivityDate(event.date);
+      if (Number.isNaN(date.getTime()) || date < today) return [];
+
+      return [{
+        id: `event-${event.id}`,
+        title: event.name,
+        date,
+        time: event.time,
+        location: [event.venue, event.city].filter(Boolean).join(", "),
+        type: registration.status === "Pending"
+          ? `${registration.spots} spot${registration.spots === 1 ? "" : "s"} · Pending approval`
+          : "Registered event",
+      }];
+    });
+
+  const upcomingActivities = [...courtActivities, ...eventActivities].sort(
+    (a, b) => a.date.getTime() - b.date.getTime(),
+  );
 
   const nextActivity = upcomingActivities[0];
 

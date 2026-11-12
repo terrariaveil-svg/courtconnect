@@ -20,11 +20,25 @@ interface Props {
   onConfirm: (booking: Booking) => void;
 }
 
+function formatDateInput(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function dateAfterDays(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return formatDateInput(date);
+}
+
 export default function BookingForm({ facility, onClose, onConfirm }: Props) {
   const [customer, setCustomer] = useState("");
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
+  const minimumDate = formatDateInput(new Date());
 
   const start = Number(startTime.split(":")[0]) * 60 +
     Number(startTime.split(":")[1]);
@@ -85,11 +99,25 @@ export default function BookingForm({ facility, onClose, onConfirm }: Props) {
             <input
               type="date"
               value={date}
-              min={new Date().toLocaleDateString("en-CA")}
+              min={minimumDate}
               onChange={(event) => setDate(event.target.value)}
               required
             />
           </label>
+          <div className="booking-date-choices" aria-label="Quick booking dates">
+            <button type="button" onClick={() => setDate(dateAfterDays(1))}>
+              Tomorrow
+            </button>
+            <button type="button" onClick={() => setDate(dateAfterDays(7))}>
+              In 7 days
+            </button>
+            <button type="button" onClick={() => setDate(dateAfterDays(30))}>
+              In 30 days
+            </button>
+          </div>
+          <p className="booking-date-note">
+            Book for any future date. Your request will need approval.
+          </p>
 
           <div className="time-grid">
             <label>

@@ -637,11 +637,11 @@ begin
   from public.event_registrations
   where id = registration_id
     and user_id = auth.uid()
-    and status = 'Pending'
+    and status in ('Pending', 'Confirmed')
   for update;
 
   if not found then
-    raise exception 'Pending registration not found';
+    raise exception 'Active registration not found';
   end if;
 
   delete from public.event_registrations where id = registration_id;

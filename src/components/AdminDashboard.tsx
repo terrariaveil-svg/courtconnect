@@ -60,7 +60,11 @@ export default function AdminDashboard({
   const [refreshing, setRefreshing] = useState(false);
   const [importing, setImporting] = useState(false);
   const pendingBookings = bookings.filter((booking) => booking.status === 'Pending');
-  const completedBookings = bookings.filter((booking) => booking.status === 'Done');
+  const allBookings = [...bookings].sort(
+    (a, b) =>
+      b.date.localeCompare(a.date) ||
+      b.startTime.localeCompare(a.startTime),
+  );
   const pendingRegistrations = events.filter(
     (event) =>
       registrations[event.id] > 0 &&
@@ -367,23 +371,26 @@ export default function AdminDashboard({
         )}
       </section>
 
-      <section className="admin-section" aria-labelledby="admin-completed-title">
+      <section className="admin-section" aria-labelledby="admin-all-bookings-title">
         <div className="admin-section-heading">
-          <h2 id="admin-completed-title">Completed bookings</h2>
-          <span>{completedBookings.length} done</span>
+          <h2 id="admin-all-bookings-title">All bookings</h2>
+          <span>{allBookings.length} total</span>
         </div>
-        {completedBookings.length === 0 ? (
-          <p className="admin-empty">Completed bookings will appear here after their scheduled end time.</p>
+        {allBookings.length === 0 ? (
+          <p className="admin-empty">No bookings have been made yet.</p>
         ) : (
           <ul className="admin-list">
-            {completedBookings.map((booking) => (
+            {allBookings.map((booking) => (
               <li className="admin-request" key={booking.id}>
                 <div className="admin-request-info">
                   <strong>{booking.facility.name}</strong>
                   <span>{booking.customer} · {booking.facility.location}</span>
                   <span>{booking.date} · {booking.startTime}–{booking.endTime}</span>
+                  <span>₱{booking.facility.price} / hour</span>
                 </div>
-                <span className="admin-done-badge">Done</span>
+                <span className={`admin-status-badge admin-status-${booking.status.toLowerCase()}`}>
+                  {booking.status}
+                </span>
               </li>
             ))}
           </ul>

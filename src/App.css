@@ -872,6 +872,36 @@ button:disabled {
   box-shadow: 0 25px 90px #0002;
 }
 
+.booking-date-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: -6px;
+}
+
+.booking-date-choices button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #d7e5dc;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.booking-date-choices button:hover {
+  background: var(--green-light);
+}
+
+.booking-date-note {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .modal-header {
   display: flex;
   align-items: start;
