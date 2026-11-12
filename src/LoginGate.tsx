@@ -193,6 +193,7 @@ export default function LoginGate() {
       : 'Connect Supabase by setting VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in .env.local.',
   );
   const [userName, setUserName] = useState('Alex');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [userEmail, setUserEmail] = useState('guest');
   const [userId, setUserId] = useState<string | null>(null);
   const [registeredAt, setRegisteredAt] = useState('');
@@ -278,7 +279,7 @@ export default function LoginGate() {
     const client = requireSupabase();
     const profileRequest = client
       .from('profiles')
-      .select('full_name, role, address')
+      .select('full_name, role, address, avatar_url')
       .eq('id', account.id)
       .single();
     const facilityRequest = client
@@ -331,6 +332,7 @@ export default function LoginGate() {
     setIsAdmin(isAccountAdmin);
     setUserId(account.id);
     setUserName(profile.full_name || account.user_metadata.full_name || 'Member');
+    setAvatarUrl(profile.avatar_url ?? '');
     setUserEmail(account.email ?? '');
     setRegisteredAt(account.created_at);
     setUserAddress(profile.address ?? '');
@@ -530,6 +532,52 @@ export default function LoginGate() {
     if (error) throw error;
 
     setUserAddress(data.address ?? '');
+  };
+
+  const saveProfileAvatar = async (file: File) => {
+    if (!userId) throw new Error('You are no longer signed in.');
+
+    const extensionByType: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+    const extension = extensionByType[file.type];
+    if (!extension || file.size > 5 * 1024 * 1024) {
+      throw new Error('Choose a JPG, PNG, or WebP image up to 5 MB.');
+    }
+
+    const client = requireSupabase();
+    const objectPath = `${userId}/${crypto.randomUUID()}.${extension}`;
+    const { error: uploadError } = await client.storage
+      .from('profile-avatars')
+      .upload(objectPath, file, {
+        cacheControl: '3600',
+        contentType: file.type,
+        upsert: false,
+      });
+    if (uploadError) throw uploadError;
+
+    const { data: publicUrl } = client.storage
+      .from('profile-avatars')
+      .getPublicUrl(objectPath);
+    const { data, error } = await client
+      .from('profiles')
+      .update({ avatar_url: publicUrl.publicUrl })
+      .eq('id', userId)
+      .select('avatar_url')
+      .single();
+    if (error) {
+      const { error: cleanupError } = await client.storage
+        .from('profile-avatars')
+        .remove([objectPath]);
+      if (cleanupError) {
+        console.error('Unable to remove the unused profile photo after saving failed.', cleanupError);
+      }
+      throw error;
+    }
+
+    setAvatarUrl(data.avatar_url ?? '');
   };
 
   useEffect(() => {
@@ -1522,12 +1570,14 @@ export default function LoginGate() {
     return (
       <UserInfo
         userName={userName}
+        avatarUrl={avatarUrl}
         registeredAt={registeredAt}
         address={userAddress}
         visits={visits}
         bookings={bookings}
         onBookingStatusChange={updateBookingStatus}
         onSaveAddress={saveProfileAddress}
+        onSaveAvatar={saveProfileAvatar}
         courts={customCourts.filter((court) => court.ownerId === userId)}
         onUpdateCourt={updateCourt}
         onDeleteCourt={deleteCourt}

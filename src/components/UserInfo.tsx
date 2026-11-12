@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import './UserInfo.css';
 import profileImg from '../assets/profile.jpeg';
@@ -11,6 +11,7 @@ import { formatTotalTime, getFitnessOverview } from './fitnessOverview';
 
 type UserInfoProps = {
   userName?: string;
+  avatarUrl?: string;
   registeredAt?: string;
   address?: string;
   visits?: Visit[];
@@ -18,6 +19,7 @@ type UserInfoProps = {
   courts?: Facility[];
   onHome: () => void;
   onSaveAddress?: (address: string) => Promise<void>;
+  onSaveAvatar?: (file: File) => Promise<void>;
   onUpdateCourt?: (court: Facility) => Promise<void>;
   onDeleteCourt?: (id: number) => Promise<boolean>;
   onBookingStatusChange?: (id: number, status: ApprovalStatus) => void;
@@ -56,6 +58,7 @@ function getProfileSaveError(error: unknown): string {
 
 export default function UserInfo({
   userName = 'Alex Wassabi',
+  avatarUrl,
   registeredAt,
   address = '',
   visits = [],
@@ -63,6 +66,7 @@ export default function UserInfo({
   courts = [],
   onHome,
   onSaveAddress,
+  onSaveAvatar,
   onUpdateCourt,
   onDeleteCourt,
   onBookingStatusChange,
@@ -77,6 +81,9 @@ export default function UserInfo({
   const [addressDraft, setAddressDraft] = useState(address);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [addressError, setAddressError] = useState('');
+  const [avatarError, setAvatarError] = useState('');
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [editingCourtId, setEditingCourtId] = useState<number | null>(null);
   const [courtDraft, setCourtDraft] = useState({
     name: '',
@@ -151,14 +158,67 @@ export default function UserInfo({
     }
   }
 
+  async function handleAvatarChange(file?: File) {
+    if (!file || !onSaveAvatar) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setAvatarError('Choose a JPG, PNG, or WebP image.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError('Your profile photo must be 5 MB or smaller.');
+      return;
+    }
+
+    setIsSavingAvatar(true);
+    setAvatarError('');
+    try {
+      await onSaveAvatar(file);
+    } catch (error) {
+      setAvatarError(
+        error instanceof Error ? error.message : 'Unable to update your profile photo.',
+      );
+    } finally {
+      setIsSavingAvatar(false);
+    }
+  }
+
   return (
     <div className="user-page">
       <div className="user-card">
         {/* Header */}
         <header className="user-header">
           <div className="user-header-left">
-            <div className="user-photo">
-              <img src={profileImg} alt={userName} className="user-photo-img" />
+            <div className="user-photo-control">
+              <div className="user-photo">
+                <img src={avatarUrl || profileImg} alt={`${userName}'s profile`} className="user-photo-img" />
+              </div>
+              {onSaveAvatar && (
+                <>
+                  <input
+                    ref={avatarInputRef}
+                    className="user-photo-input"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    aria-label="Choose a profile photo"
+                    disabled={isSavingAvatar}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      event.target.value = '';
+                      void handleAvatarChange(file);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="user-photo-edit"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={isSavingAvatar}
+                  >
+                    {isSavingAvatar ? 'Uploading…' : 'Change photo'}
+                  </button>
+                  {avatarError && <p className="user-photo-error" role="alert">{avatarError}</p>}
+                </>
+              )}
             </div>
             <div>
               <h1 className="user-name">{userName}</h1>

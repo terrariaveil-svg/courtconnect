@@ -303,15 +303,7 @@ export default function HomePage({
               </p>
             </>
           ) : (
-            <div>
-              <h2 className="home-session">
-                Nothing scheduled yet
-              </h2>
-              <p>
-                Your upcoming court bookings and event registrations
-                will automatically appear here.
-              </p>
-            </div>
+            <h2 className="home-session">No schedule</h2>
           )}
 
           <div className="home-actions">
