@@ -55,10 +55,16 @@ function formatDate(date: Date) {
 }
 
 function formatTime(time: string) {
-  const [hours, minutes] = time.split(":").map(Number);
+  const minutesFromMidnight = timeToMinutes(time);
+  if (!Number.isFinite(minutesFromMidnight)) return "";
 
   const date = new Date();
-  date.setHours(hours, minutes, 0, 0);
+  date.setHours(
+    Math.floor(minutesFromMidnight / 60),
+    minutesFromMidnight % 60,
+    0,
+    0,
+  );
 
   return date.toLocaleTimeString("en-PH", {
     hour: "numeric",
@@ -68,13 +74,24 @@ function formatTime(time: string) {
 
 function getActivityDate(dateValue: string, timeValue?: string) {
   const isoDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateValue);
-  const date = isoDate
-    ? new Date(Number(isoDate[1]), Number(isoDate[2]) - 1, Number(isoDate[3]))
-    : new Date(dateValue);
+  let date: Date;
+  if (isoDate) {
+    date = new Date(Number(isoDate[1]), Number(isoDate[2]) - 1, Number(isoDate[3]));
+    if (
+      date.getFullYear() !== Number(isoDate[1]) ||
+      date.getMonth() !== Number(isoDate[2]) - 1 ||
+      date.getDate() !== Number(isoDate[3])
+    ) {
+      return new Date(Number.NaN);
+    }
+  } else {
+    date = new Date(dateValue);
+  }
 
-  const time = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(timeValue ?? "");
-  if (time && !Number.isNaN(date.getTime())) {
-    date.setHours(Number(time[1]), Number(time[2]), 0, 0);
+  if (timeValue && !Number.isNaN(date.getTime())) {
+    const minutes = timeToMinutes(timeValue);
+    if (!Number.isFinite(minutes)) return new Date(Number.NaN);
+    date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
   }
 
   return date;
@@ -113,31 +130,27 @@ export default function HomePage({
       : "Good evening";
 
   const upcomingActivities: UpcomingActivity[] = (bookings ?? [])
-    .filter((booking) => {
+    .flatMap((booking) => {
+      if (booking.status !== "Confirmed") return [];
+
       const start = timeToMinutes(booking.startTime);
       const end = timeToMinutes(booking.endTime);
-      return booking.status === "Confirmed" &&
-        Number.isFinite(start) &&
-        Number.isFinite(end) &&
-        end > start;
-    })
-    .map((booking) => {
-      const date = getActivityDate(booking.date, booking.startTime);
+      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+        return [];
+      }
 
-      return {
+      const date = getActivityDate(booking.date, booking.startTime);
+      if (Number.isNaN(date.getTime()) || date < now) return [];
+
+      return [{
         id: `court-${booking.id}`,
         title: booking.facility?.name ?? "Court booking",
         date,
         time: `${formatTime(booking.startTime)} – ${formatTime(booking.endTime)}`,
         location: booking.facility?.location ?? "CourtConnect Sports Complex",
         type: "Court booking",
-      };
+      }];
     })
-    .filter(
-      (activity) =>
-        !Number.isNaN(activity.date.getTime()) &&
-        activity.date >= now
-    )
     .sort(
       (a, b) => a.date.getTime() - b.date.getTime()
     );
