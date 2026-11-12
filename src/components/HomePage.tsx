@@ -56,7 +56,7 @@ function formatDate(date: Date) {
 
 function formatTime(time: string) {
   const minutesFromMidnight = timeToMinutes(time);
-  if (!Number.isFinite(minutesFromMidnight)) return "";
+  if (!Number.isFinite(minutesFromMidnight)) return "Time unavailable";
 
   const date = new Date();
   date.setHours(
@@ -90,8 +90,9 @@ function getActivityDate(dateValue: string, timeValue?: string) {
 
   if (timeValue && !Number.isNaN(date.getTime())) {
     const minutes = timeToMinutes(timeValue);
-    if (!Number.isFinite(minutes)) return new Date(Number.NaN);
-    date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+    if (Number.isFinite(minutes)) {
+      date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+    }
   }
 
   return date;
@@ -135,18 +136,32 @@ export default function HomePage({
 
       const start = timeToMinutes(booking.startTime);
       const end = timeToMinutes(booking.endTime);
-      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+      const hasValidTimes =
+        Number.isFinite(start) && Number.isFinite(end) && end > start;
+      const day = getActivityDate(booking.date);
+      if (Number.isNaN(day.getTime())) return [];
+
+      const date = hasValidTimes
+        ? getActivityDate(booking.date, booking.startTime)
+        : day;
+      const endDate = hasValidTimes
+        ? getActivityDate(booking.date, booking.endTime)
+        : undefined;
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      if (
+        (hasValidTimes && (!endDate || endDate < now)) ||
+        (!hasValidTimes && day < today)
+      ) {
         return [];
       }
-
-      const date = getActivityDate(booking.date, booking.startTime);
-      if (Number.isNaN(date.getTime()) || date < now) return [];
 
       return [{
         id: `court-${booking.id}`,
         title: booking.facility?.name ?? "Court booking",
         date,
-        time: `${formatTime(booking.startTime)} – ${formatTime(booking.endTime)}`,
+        time: hasValidTimes
+          ? `${formatTime(booking.startTime)} – ${formatTime(booking.endTime)}`
+          : "Time unavailable",
         location: booking.facility?.location ?? "CourtConnect Sports Complex",
         type: "Court booking",
       }];
