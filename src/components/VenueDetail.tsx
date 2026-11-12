@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import './VenueDetail.css';
 import TopNav from './TopNav';
 import type { Facility } from './AvailableSpaces';
 import type { Booking } from './BookingForm';
-import { todayISO } from './eventsList';
+import { addDaysISO, todayISO } from './eventsList';
 import { timeToMinutes } from './bookingAvailability';
 import { requireSupabase } from '../lib/supabase';
 
@@ -12,6 +12,10 @@ type BookingAvailability = {
   start_time: string;
   end_time: string;
   status: string;
+};
+
+type FacilityRating = {
+  rating: number;
 };
 
 function availabilityErrorMessage(error: unknown): string {
@@ -204,6 +208,7 @@ export default function VenueDetail({
   onRent,
 }: VenueDetailProps) {
   const [slot, setSlot] = useState(SLOTS[0]);
+  const [bookingDate, setBookingDate] = useState(todayISO);
   const [imageIndex, setImageIndex] = useState(0);
   const [now, setNow] = useState(() => new Date());
   const [busySlots, setBusySlots] = useState<BookingAvailability[]>([]);
@@ -211,6 +216,15 @@ export default function VenueDetail({
   const [availabilityError, setAvailabilityError] = useState('');
   const [slotMessage, setSlotMessage] = useState('');
   const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
+  const [ratingRows, setRatingRows] = useState<FacilityRating[]>([]);
+  const [ratingUserId, setRatingUserId] = useState<string | null>(null);
+  const [myRating, setMyRating] = useState<number | null>(null);
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [ratingLoaded, setRatingLoaded] = useState(false);
+  const [ratingError, setRatingError] = useState('');
+  const [ratingMessage, setRatingMessage] = useState('');
+  const [isSavingRating, setIsSavingRating] = useState(false);
+  const availabilityRequestId = useRef(0);
 
   // Only scroll to the top when the selected facility changes.
   // Do NOT record a recent visit here.
@@ -233,14 +247,15 @@ export default function VenueDetail({
     ),
   ];
 
-  const today = now;
-  const bookingDate = todayISO();
-
-  const shortDate = today.toLocaleDateString('en-US', {
+  const shortDate = new Date(`${bookingDate}T00:00:00`).toLocaleDateString('en-US', {
     month: 'short',
     day: '2-digit',
     year: 'numeric',
   });
+  const ratingCount = ratingRows.length;
+  const averageRating = ratingCount
+    ? (ratingRows.reduce((total, item) => total + item.rating, 0) / ratingCount).toFixed(1)
+    : null;
 
   const about = isGym
     ? `${facility.name} offers a premium gym floor experience for members of all levels. Our well-maintained equipment, clean facilities, and friendly environment make it the perfect place to train, build strength, and stay active.`
@@ -254,22 +269,38 @@ export default function VenueDetail({
   ];
 
   const refreshAvailability = useCallback(async () => {
+    const requestId = ++availabilityRequestId.current;
     try {
       const { data, error } = await requireSupabase().rpc(
         'get_booking_availability',
         { target_date: bookingDate },
       );
       if (error) throw error;
+      if (requestId !== availabilityRequestId.current) return;
 
       setBusySlots((data ?? []) as BookingAvailability[]);
       setAvailabilityError('');
     } catch (error) {
+      if (requestId !== availabilityRequestId.current) return;
       console.error('Unable to load court booking availability.', error);
       setAvailabilityError(availabilityErrorMessage(error));
     } finally {
-      setAvailabilityLoaded(true);
+      if (requestId === availabilityRequestId.current) {
+        setAvailabilityLoaded(true);
+      }
     }
   }, [bookingDate]);
+
+  const changeBookingDate = (date: string) => {
+    if (!date) return;
+    availabilityRequestId.current += 1;
+    setBookingDate(date);
+    setSlot(SLOTS[0]);
+    setSlotMessage('');
+    setAvailabilityError('');
+    setAvailabilityLoaded(false);
+    setBusySlots([]);
+  };
 
   useEffect(() => {
     let active = true;
@@ -300,6 +331,63 @@ export default function VenueDetail({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [refreshAvailability]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadRatings = async () => {
+      setRatingLoaded(false);
+      setRatingError('');
+      setRatingRows([]);
+      setRatingUserId(null);
+      setMyRating(null);
+      setSelectedRating(0);
+      try {
+        const client = requireSupabase();
+        const { data: userData, error: userError } = await client.auth.getUser();
+        if (userError) throw userError;
+        if (!userData.user) throw new Error('Sign in to view and submit venue ratings.');
+
+        const [ratingsResult, ownRatingResult] = await Promise.all([
+          client
+            .from('facility_ratings')
+            .select('rating')
+            .eq('facility_id', facility.id),
+          client
+            .from('facility_ratings')
+            .select('rating')
+            .eq('facility_id', facility.id)
+            .eq('user_id', userData.user.id)
+            .maybeSingle(),
+        ]);
+        if (ratingsResult.error) throw ratingsResult.error;
+        if (ownRatingResult.error) throw ownRatingResult.error;
+
+        if (active) {
+          const rows = (ratingsResult.data ?? []) as FacilityRating[];
+          const ownRating = ownRatingResult.data?.rating ?? null;
+          setRatingRows(rows);
+          setRatingUserId(userData.user.id);
+          setMyRating(ownRating);
+          setSelectedRating(ownRating ?? 0);
+        }
+      } catch (error) {
+        console.error('Unable to load venue ratings.', error);
+        if (active) {
+          setRatingError(
+            error instanceof Error ? error.message : 'Venue ratings could not be loaded.',
+          );
+        }
+      } finally {
+        if (active) setRatingLoaded(true);
+      }
+    };
+
+    void loadRatings();
+    return () => {
+      active = false;
+    };
+  }, [facility.id]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => setNow(new Date()), 15_000);
@@ -337,6 +425,48 @@ export default function VenueDetail({
 
   const firstAvailableSlot = SLOTS.find((candidate) => !isSlotUnavailable(candidate));
   const activeSlot = isSlotUnavailable(slot) ? firstAvailableSlot ?? slot : slot;
+
+  const saveRating = async () => {
+    if (!ratingUserId || selectedRating < 1 || selectedRating > 5) return;
+
+    setIsSavingRating(true);
+    setRatingError('');
+    setRatingMessage('');
+    try {
+      const { error } = await requireSupabase()
+        .from('facility_ratings')
+        .upsert(
+          {
+            facility_id: facility.id,
+            user_id: ratingUserId,
+            rating: selectedRating,
+          },
+          { onConflict: 'facility_id,user_id' },
+        );
+      if (error) throw error;
+
+      setRatingRows((previous) => {
+        let removedOwnRating = false;
+        const otherRatings = previous.filter((item) => {
+          if (!removedOwnRating && myRating !== null && item.rating === myRating) {
+            removedOwnRating = true;
+            return false;
+          }
+          return true;
+        });
+        return [...otherRatings, { rating: selectedRating }];
+      });
+      setMyRating(selectedRating);
+      setRatingMessage('Your rating has been saved.');
+    } catch (error) {
+      console.error('Unable to save the venue rating.', error);
+      setRatingError(
+        error instanceof Error ? error.message : 'Unable to save your rating.',
+      );
+    } finally {
+      setIsSavingRating(false);
+    }
+  };
 
   const rent = async () => {
     if (!availabilityLoaded || availabilityError) {
@@ -442,8 +572,16 @@ export default function VenueDetail({
 
             <div className="vd-meta">
               <span className="vd-rating">
-                <span className="vd-star">★</span> 4.8{' '}
-                <span className="vd-reviews">(124 reviews)</span>
+                {averageRating ? (
+                  <>
+                    <span className="vd-star">★</span> {averageRating}{' '}
+                    <span className="vd-reviews">
+                      ({ratingCount} rating{ratingCount === 1 ? '' : 's'})
+                    </span>
+                  </>
+                ) : (
+                  <span className="vd-reviews">No ratings yet</span>
+                )}
               </span>
 
               <span className="vd-location">
@@ -521,8 +659,16 @@ export default function VenueDetail({
                 <strong>{facility.name}</strong>
 
                 <span className="vd-venue-rating">
-                  <span className="vd-star">★</span> 4.8{' '}
-                  <span className="vd-reviews">(124 reviews)</span>
+                  {averageRating ? (
+                    <>
+                      <span className="vd-star">★</span> {averageRating}{' '}
+                      <span className="vd-reviews">
+                        ({ratingCount} rating{ratingCount === 1 ? '' : 's'})
+                      </span>
+                    </>
+                  ) : (
+                    <span className="vd-reviews">No ratings yet</span>
+                  )}
                 </span>
 
                 <span className="vd-badge vd-badge-small">Indoor</span>
@@ -536,8 +682,72 @@ export default function VenueDetail({
 
             <div className="vd-divider" />
 
+            <div className="vd-rating-editor">
+              <strong>Rate this venue</strong>
+              <div className="vd-rating-input" role="group" aria-label="Your rating">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-label={`${value} star${value === 1 ? '' : 's'}`}
+                    aria-pressed={selectedRating === value}
+                    className={value <= selectedRating ? 'is-selected' : ''}
+                    disabled={!ratingLoaded || Boolean(ratingError)}
+                    onClick={() => {
+                      setSelectedRating(value);
+                      setRatingMessage('');
+                    }}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="vd-rating-submit"
+                disabled={!ratingLoaded || Boolean(ratingError) || !selectedRating || isSavingRating}
+                onClick={() => void saveRating()}
+              >
+                {isSavingRating
+                  ? 'Saving…'
+                  : myRating === null
+                    ? 'Submit rating'
+                    : 'Update rating'}
+              </button>
+              {(ratingError || ratingMessage) && (
+                <p className={ratingError ? 'has-error' : ''} role="status">
+                  {ratingError || ratingMessage}
+                </p>
+              )}
+            </div>
+
+            <div className="vd-divider" />
+
+            <div className="vd-booking-date">
+              <label htmlFor="vd-booking-date">Booking date</label>
+              <input
+                id="vd-booking-date"
+                type="date"
+                value={bookingDate}
+                min={todayISO()}
+                required
+                onChange={(event) => changeBookingDate(event.target.value)}
+              />
+              <div className="vd-date-shortcuts" aria-label="Quick booking dates">
+                <button type="button" onClick={() => changeBookingDate(addDaysISO(todayISO(), 1))}>
+                  Tomorrow
+                </button>
+                <button type="button" onClick={() => changeBookingDate(addDaysISO(todayISO(), 7))}>
+                  In 7 days
+                </button>
+                <button type="button" onClick={() => changeBookingDate(addDaysISO(todayISO(), 30))}>
+                  In 30 days
+                </button>
+              </div>
+            </div>
+
             <div className="vd-slots-head">
-              <strong>Today’s Open Slots</strong>
+              <strong>Open Slots</strong>
 
               <span className="vd-slots-date">
                 <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2">

@@ -296,6 +296,78 @@
   font-weight: 400;
 }
 
+.vd-rating-editor {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.vd-rating-editor > strong {
+  color: #10253a;
+  font-size: 11px;
+}
+
+.vd-rating-input {
+  display: flex;
+  gap: 3px;
+}
+
+.vd-rating-input button {
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: #cbd4d8;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.vd-rating-input button.is-selected {
+  color: #f5a400;
+}
+
+.vd-rating-input button:disabled {
+  cursor: wait;
+}
+
+.vd-rating-input button:focus-visible,
+.vd-rating-submit:focus-visible,
+.vd-date-shortcuts button:focus-visible {
+  outline: 2px solid #10253a;
+  outline-offset: 2px;
+}
+
+.vd-rating-submit {
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid #d7e5dc;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #087a4f;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.vd-rating-submit:hover:not(:disabled) {
+  background: #f0faf5;
+}
+
+.vd-rating-submit:disabled {
+  color: #8c9aa1;
+  cursor: not-allowed;
+}
+
+.vd-rating-editor p {
+  margin: 0;
+  color: #087a4f;
+  font-size: 10px;
+}
+
+.vd-rating-editor p.has-error {
+  color: #b42318;
+}
+
 .vd-location {
   display: inline-flex;
   align-items: center;
@@ -553,6 +625,51 @@
   height: 1px;
   margin: 16px 0;
   background: #e9eff1;
+}
+
+.vd-booking-date {
+  display: grid;
+  gap: 8px;
+}
+
+.vd-booking-date label {
+  color: #10253a;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.vd-booking-date input {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 9px;
+  border: 1px solid #dfe8eb;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #3b4d5b;
+  font: inherit;
+  font-size: 11px;
+}
+
+.vd-date-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vd-date-shortcuts button {
+  min-height: 27px;
+  padding: 0 8px;
+  border: 1px solid #d7e5dc;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #087a4f;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.vd-date-shortcuts button:hover {
+  background: #f0faf5;
 }
 
 .vd-slots-head {

@@ -22,6 +22,7 @@ FRONTEND_ORIGINS = [
 TABLE_METHODS = {
     "profiles": {"GET", "PATCH"},
     "facilities": {"GET", "POST", "PATCH", "DELETE"},
+    "facility_ratings": {"GET", "POST"},
     "court_requests": {"GET", "POST"},
     "bookings": {"GET", "POST", "PATCH", "DELETE"},
     "events": {"GET", "POST"},
