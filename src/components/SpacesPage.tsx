@@ -3,7 +3,7 @@ import VenueDetail from './VenueDetail';
 import type { Booking } from './BookingForm';
 import type { Facility } from './AvailableSpaces';
 import type { SpaceChoice } from './QuickBook';
-import { spacesFor } from './spacesData';
+import { COURTS, GYMS, searchFacilities, spacesFor } from './spacesData';
 import type { CourtRequest, CourtRequestStatus } from './courtRequests';
 import './SpacesPage.css';
 
@@ -13,6 +13,7 @@ type SpacesPageProps = {
   courtRequests: CourtRequest[];
   courtRequestStorageError: string;
   initialFacilityId?: number | null;
+  searchValue?: string;
   onFacilityViewed: (facility: Facility) => void;
   onRequestCourt: (court: Omit<Facility, 'id'>) => boolean | Promise<boolean>;
   onChoiceChange: (choice: SpaceChoice) => void;
@@ -26,6 +27,7 @@ type SpacesPageProps = {
   onOpenSpaces: () => void;
   onOpenEvents: () => void;
   onOpenNotifications: () => void;
+  onSearch: (query: string) => void;
 };
 
 export default function SpacesPage({
@@ -34,6 +36,7 @@ export default function SpacesPage({
   courtRequests,
   courtRequestStorageError,
   initialFacilityId,
+  searchValue = '',
   onFacilityViewed,
   onRequestCourt,
   onBooked,
@@ -46,6 +49,7 @@ export default function SpacesPage({
   onOpenSpaces,
   onOpenEvents,
   onOpenNotifications,
+  onSearch,
 }: SpacesPageProps) {
   const [courtName, setCourtName] = useState('');
   const [courtType, setCourtType] = useState('Basketball');
@@ -59,18 +63,27 @@ export default function SpacesPage({
     ...spacesFor(choice),
     ...(choice === 'court' ? customCourts : []),
   ];
+  const matchingFacilities = searchValue.trim()
+    ? searchFacilities([...COURTS, ...GYMS, ...customCourts], searchValue)
+    : facilities;
 
-  const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(
-    initialFacilityId ?? null,
-  );
+  const [selection, setSelection] = useState({
+    searchValue,
+    initialFacilityId,
+    facilityId: initialFacilityId ?? null,
+  });
+  const selectedFacilityId =
+    selection.searchValue === searchValue &&
+    selection.initialFacilityId === initialFacilityId
+      ? selection.facilityId
+      : initialFacilityId ?? null;
+  const selectFacility = (facilityId: number) => {
+    setSelection({ searchValue, initialFacilityId, facilityId });
+  };
 
   const facility =
-    facilities.find((item) => item.id === selectedFacilityId) ??
-    facilities[0];
-
-  if (!facility) {
-    return <div>No available facilities found.</div>;
-  }
+    matchingFacilities.find((item) => item.id === selectedFacilityId) ??
+    matchingFacilities[0];
 
   async function submitCourtRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -137,23 +150,32 @@ export default function SpacesPage({
 
   return (
     <>
-      <VenueDetail
-        key={facility.id}
-        facility={facility}
-        facilities={facilities}
-        onSelectFacility={setSelectedFacilityId}
-        onFacilityViewed={onFacilityViewed}
-        userName={userName}
-        unreadCount={unreadCount}
-        bookingCount={bookingCount}
-        onBack={onHome}
-        onOpenProfile={onOpenProfile}
-        onOpenBookings={onOpenBookings}
-        onOpenSpaces={onOpenSpaces}
-        onOpenEvents={onOpenEvents}
-        onOpenNotifications={onOpenNotifications}
-        onRent={onBooked}
-      />
+      {facility ? (
+        <VenueDetail
+          key={facility.id}
+          facility={facility}
+          facilities={matchingFacilities}
+          onSelectFacility={selectFacility}
+          onFacilityViewed={onFacilityViewed}
+          userName={userName}
+          unreadCount={unreadCount}
+          bookingCount={bookingCount}
+          onBack={onHome}
+          onOpenProfile={onOpenProfile}
+          onOpenBookings={onOpenBookings}
+          onOpenSpaces={onOpenSpaces}
+          onOpenEvents={onOpenEvents}
+          onOpenNotifications={onOpenNotifications}
+          searchValue={searchValue}
+          onSearch={onSearch}
+          onRent={onBooked}
+        />
+      ) : (
+        <section className="spaces-no-results" role="status">
+          <h1>{searchValue.trim() ? 'No spaces found' : 'No available facilities found'}</h1>
+          {searchValue.trim() && <p>No venues, sports, or locations match “{searchValue.trim()}”.</p>}
+        </section>
+      )}
       {choice === 'court' && (
         <section className="court-request-panel" aria-labelledby="court-request-title">
           <div className="court-request-heading">

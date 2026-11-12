@@ -96,3 +96,14 @@ export const GYMS: Facility[] = [
 export const spacesFor = (choice: SpaceChoice): Facility[] => {
   return choice === 'gym' ? GYMS : COURTS;
 };
+
+export function searchFacilities(facilities: Facility[], query: string): Facility[] {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return facilities;
+
+  return facilities.filter((facility) =>
+    `${facility.name} ${facility.type} ${facility.location}`
+      .toLowerCase()
+      .includes(normalizedQuery),
+  );
+}

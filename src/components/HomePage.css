@@ -68,6 +68,21 @@
   font-family: inherit;
 }
 
+.home-search button {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.home-search button:focus-visible {
+  outline: 2px solid #0a8a5a;
+  outline-offset: 3px;
+}
+
 .home-bell {
   display: grid;
   place-items: center;

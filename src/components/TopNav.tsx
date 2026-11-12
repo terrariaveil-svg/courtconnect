@@ -1,4 +1,5 @@
 import './TopNav.css';
+import { useState, type FormEvent } from 'react';
 import logo from '../assets/courtconnect-logo.png';
 import { NotifBadge } from './NotifAlerts';
 
@@ -13,6 +14,8 @@ type TopNavProps = {
   onOpenSpaces?: () => void;
   onOpenEvents?: () => void;
   onOpenNotifications?: () => void;
+  searchValue?: string;
+  onSearch?: (query: string) => void;
 };
 
 export default function TopNav({
@@ -26,10 +29,19 @@ export default function TopNav({
   onOpenSpaces,
   onOpenEvents,
   onOpenNotifications,
+  searchValue = '',
+  onSearch,
 }: TopNavProps) {
+  const [query, setQuery] = useState(searchValue);
+
   const go = (action?: () => void) => () => {
     window.scrollTo(0, 0);
     action?.();
+  };
+
+  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSearch?.(query);
   };
 
   return (
@@ -65,13 +77,20 @@ export default function TopNav({
       </nav>
 
       <div className="tn-right">
-        <label className="tn-search">
+        <form className="tn-search" role="search" onSubmit={submitSearch}>
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="7" />
             <path d="M20 20l-3.5-3.5" />
           </svg>
-          <input type="text" placeholder="Search by venue, location or sport..." />
-        </label>
+          <input
+            type="search"
+            aria-label="Search spaces by venue, location, or sport"
+            placeholder="Search by venue, location or sport..."
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <button type="submit" aria-label="Search spaces">Search</button>
+        </form>
 
         <button
           type="button"

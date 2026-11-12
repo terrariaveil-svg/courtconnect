@@ -50,6 +50,8 @@ type VenueDetailProps = {
   onOpenSpaces?: () => void;
   onOpenEvents?: () => void;
   onOpenNotifications?: () => void;
+  searchValue?: string;
+  onSearch?: (query: string) => void;
   onRent: (booking: Booking) => void | Promise<void>;
 };
 
@@ -197,6 +199,8 @@ export default function VenueDetail({
   onOpenSpaces,
   onOpenEvents,
   onOpenNotifications,
+  searchValue,
+  onSearch,
   onRent,
 }: VenueDetailProps) {
   const [slot, setSlot] = useState(SLOTS[0]);
@@ -378,6 +382,7 @@ export default function VenueDetail({
   return (
     <div className="vd-page">
       <TopNav
+        key={searchValue}
         active="spaces"
         userName={userName}
         unreadCount={unreadCount}
@@ -388,6 +393,8 @@ export default function VenueDetail({
         onOpenSpaces={onOpenSpaces}
         onOpenEvents={onOpenEvents}
         onOpenNotifications={onOpenNotifications}
+        searchValue={searchValue}
+        onSearch={onSearch}
       />
 
       <main className="vd-main">

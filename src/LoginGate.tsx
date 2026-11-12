@@ -35,6 +35,7 @@ import { useRecentVisits } from './components/useRecentVisits';
 import { loadVisits } from './components/recentVisits';
 import type { Visit } from './components/recentVisits';
 import { isSupabaseConfigured, requireSupabase, supabase } from './lib/supabase';
+import { COURTS, GYMS, searchFacilities } from './components/spacesData';
 
 type Screen =
   | 'loading'
@@ -215,6 +216,7 @@ export default function LoginGate() {
 
   const [spaceChoice, setSpaceChoice] = useState<SpaceChoice>('court');
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [lastBooking, setLastBooking] = useState<Booking | null>(null);
@@ -831,8 +833,35 @@ export default function LoginGate() {
   };
 
   const openSpaces = (choice: SpaceChoice) => {
+    setSearchQuery('');
     setSpaceChoice(choice);
     setSelectedVisitId(null);
+    setScreen('spaces');
+  };
+
+  const handleSearch = (query: string) => {
+    const normalizedQuery = query.trim();
+    setSearchQuery(normalizedQuery);
+
+    if (!normalizedQuery) {
+      setSelectedVisitId(null);
+      setScreen('spaces');
+      return;
+    }
+
+    const matches = searchFacilities(
+      [...COURTS, ...GYMS, ...customCourts],
+      normalizedQuery,
+    );
+    const firstMatch = matches[0];
+
+    if (firstMatch) {
+      setSpaceChoice(firstMatch.type === 'Gym floor' ? 'gym' : 'court');
+      setSelectedVisitId(firstMatch.id);
+    } else {
+      setSelectedVisitId(null);
+    }
+
     setScreen('spaces');
   };
 
@@ -1420,9 +1449,11 @@ export default function LoginGate() {
     onHome: () => setScreen('home'),
     onOpenProfile: () => setScreen('profile'),
     onOpenBookings: () => setScreen('mybookings'),
-    onOpenSpaces: () => setScreen('spaces'),
+    onOpenSpaces: () => openSpaces(spaceChoice),
     onOpenEvents: () => setScreen('events'),
     onOpenNotifications: () => setScreen('notifications'),
+    searchValue: searchQuery,
+    onSearch: handleSearch,
   };
 
   const currentEvent = events.find(
@@ -1665,6 +1696,7 @@ export default function LoginGate() {
       onViewDetails={() => setScreen('activity')}
       onOpenNotifications={() => setScreen('notifications')}
       onShowSpaces={openSpaces}
+      onSearch={handleSearch}
     />
   );
 }

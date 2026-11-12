@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import "./HomePage.css";
 import { UnreadToast } from "./NotifAlerts";
 import logo from "../assets/courtconnect-logo.png";
@@ -23,6 +23,7 @@ type HomePageProps = {
   onCloseUnreadAlert?: () => void;
   onViewDetails?: () => void;
   onOpenNotifications?: () => void;
+  onSearch?: (query: string) => void;
 };
 
 type UpcomingActivity = {
@@ -85,16 +86,17 @@ export default function HomePage({
   bookings = [],
   registeredEvents = [],
   onSignOut,
-  onExplore,
   onOpenBookings,
   onOpenProfile,
   onShowSpaces,
   onOpenNotifications,
+  onSearch,
   unreadCount = 0,
   showUnreadAlert = false,
   onCloseUnreadAlert,
 }: HomePageProps) {
   const [quickBookOpen, setQuickBookOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState(() => {
     const date = new Date();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -151,6 +153,11 @@ export default function HomePage({
 
   const nextActivity = upcomingActivities[0];
 
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onSearch?.(searchQuery);
+  }
+
   return (
     <div className="home-page">
       <header className="home-nav">
@@ -164,24 +171,29 @@ export default function HomePage({
         </div>
 
         <div className="home-nav-right">
-          <label className="home-search">
+          <form className="home-search" role="search" onSubmit={submitSearch}>
             <input
-              type="text"
+              type="search"
+              aria-label="Search spaces by venue, location, or sport"
               placeholder="Find a Space"
-              onFocus={onExplore}
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
             />
-            <svg
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="M20 20l-3.5-3.5" />
-            </svg>
-          </label>
+            <button type="submit" aria-label="Search spaces">
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="M20 20l-3.5-3.5" />
+              </svg>
+            </button>
+          </form>
 
           <button
             className="home-bell"

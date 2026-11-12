@@ -14,6 +14,8 @@ type SpacesShellProps = {
   onOpenSpaces?: () => void;
   onOpenEvents?: () => void;
   onOpenNotifications: () => void;
+  searchValue?: string;
+  onSearch?: (query: string) => void;
   children: ReactNode;
 };
 
@@ -28,11 +30,14 @@ export default function SpacesShell({
   onOpenSpaces,
   onOpenEvents,
   onOpenNotifications,
+  searchValue,
+  onSearch,
   children,
 }: SpacesShellProps) {
   return (
     <div className="sp-page">
       <TopNav
+        key={searchValue}
         active={active}
         userName={userName}
         unreadCount={unreadCount}
@@ -43,6 +48,8 @@ export default function SpacesShell({
         onOpenSpaces={onOpenSpaces}
         onOpenEvents={onOpenEvents}
         onOpenNotifications={onOpenNotifications}
+        searchValue={searchValue}
+        onSearch={onSearch}
       />
 
       <div className="sp-main">{children}</div>
