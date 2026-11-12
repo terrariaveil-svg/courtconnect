@@ -107,6 +107,21 @@
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
+  overflow: hidden;
+}
+
+.home-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.home-avatar-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
 }
 
 .home-avatar:hover {

@@ -10,6 +10,7 @@ import { timeToMinutes } from "./bookingAvailability";
 
 type HomePageProps = {
   userName?: string;
+  avatarUrl?: string;
   bookings?: Booking[];
   onSignOut?: () => void;
   onExplore?: () => void;
@@ -100,6 +101,7 @@ function getActivityDate(dateValue: string, timeValue?: string) {
 
 export default function HomePage({
   userName = "Alex",
+  avatarUrl,
   bookings = [],
   onSignOut,
   onOpenBookings,
@@ -238,7 +240,17 @@ export default function HomePage({
             onClick={onOpenProfile}
             aria-label="Open profile"
           >
-            {userName.charAt(0).toUpperCase()}
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={`${userName}'s profile`}
+                className="home-avatar-image"
+              />
+            ) : (
+              <span className="home-avatar-fallback">
+                {userName.charAt(0).toUpperCase()}
+              </span>
+            )}
           </button>
         </div>
       </header>

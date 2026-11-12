@@ -1731,6 +1731,7 @@ export default function LoginGate() {
   return (
     <HomePage
       userName={userName}
+      avatarUrl={avatarUrl}
       bookings={bookings}
       unreadCount={unreadCount}
       showUnreadAlert={toastOpen}
