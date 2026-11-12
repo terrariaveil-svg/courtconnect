@@ -6,6 +6,7 @@ import logo from "../assets/courtconnect-logo.png";
 import heroImg from "../assets/tennis-court.png";
 import QuickBook, { type SpaceChoice } from "./QuickBook";
 import type { Booking } from "./BookingForm";
+import { timeToMinutes } from "./bookingAvailability";
 
 type HomePageProps = {
   userName?: string;
@@ -71,7 +72,7 @@ function getActivityDate(dateValue: string, timeValue?: string) {
     ? new Date(Number(isoDate[1]), Number(isoDate[2]) - 1, Number(isoDate[3]))
     : new Date(dateValue);
 
-  const time = /^(\d{2}):(\d{2})$/.exec(timeValue ?? "");
+  const time = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(timeValue ?? "");
   if (time && !Number.isNaN(date.getTime())) {
     date.setHours(Number(time[1]), Number(time[2]), 0, 0);
   }
@@ -102,7 +103,6 @@ export default function HomePage({
   });
   const now = new Date();
   const hour = now.getHours();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const displayedDate = getActivityDate(selectedDate);
 
   const greeting =
@@ -112,8 +112,16 @@ export default function HomePage({
       ? "Good afternoon"
       : "Good evening";
 
-  const upcomingActivities: UpcomingActivity[] = [
-    ...(bookings ?? []).map((booking) => {
+  const upcomingActivities: UpcomingActivity[] = (bookings ?? [])
+    .filter((booking) => {
+      const start = timeToMinutes(booking.startTime);
+      const end = timeToMinutes(booking.endTime);
+      return booking.status === "Confirmed" &&
+        Number.isFinite(start) &&
+        Number.isFinite(end) &&
+        end > start;
+    })
+    .map((booking) => {
       const date = getActivityDate(booking.date, booking.startTime);
 
       return {
@@ -124,12 +132,11 @@ export default function HomePage({
         location: booking.facility?.location ?? "CourtConnect Sports Complex",
         type: "Court booking",
       };
-    }),
-  ]
+    })
     .filter(
       (activity) =>
         !Number.isNaN(activity.date.getTime()) &&
-        activity.date >= today
+        activity.date >= now
     )
     .sort(
       (a, b) => a.date.getTime() - b.date.getTime()
