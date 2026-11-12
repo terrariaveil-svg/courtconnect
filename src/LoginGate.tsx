@@ -1732,11 +1732,6 @@ export default function LoginGate() {
     <HomePage
       userName={userName}
       bookings={bookings}
-      registeredEvents={events.filter(
-        (event) =>
-          registrations[event.id] > 0 &&
-          registrationStatuses[event.id] === 'Confirmed',
-      )}
       unreadCount={unreadCount}
       showUnreadAlert={toastOpen}
       onCloseUnreadAlert={() => setToastOpen(false)}

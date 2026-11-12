@@ -6,12 +6,10 @@ import logo from "../assets/courtconnect-logo.png";
 import heroImg from "../assets/tennis-court.png";
 import QuickBook, { type SpaceChoice } from "./QuickBook";
 import type { Booking } from "./BookingForm";
-import type { ClubEvent } from "./eventsList";
 
 type HomePageProps = {
   userName?: string;
   bookings?: Booking[];
-  registeredEvents?: ClubEvent[];
   onSignOut?: () => void;
   onExplore?: () => void;
   onOpenBookings: () => void;
@@ -84,7 +82,6 @@ function getActivityDate(dateValue: string, timeValue?: string) {
 export default function HomePage({
   userName = "Alex",
   bookings = [],
-  registeredEvents = [],
   onSignOut,
   onOpenBookings,
   onOpenProfile,
@@ -126,19 +123,6 @@ export default function HomePage({
         time: `${formatTime(booking.startTime)} – ${formatTime(booking.endTime)}`,
         location: booking.facility?.location ?? "CourtConnect Sports Complex",
         type: "Court booking",
-      };
-    }),
-
-    ...(registeredEvents ?? []).map((event) => {
-      const date = getActivityDate(event.date);
-
-      return {
-        id: `event-${event.id}`,
-        title: event.name,
-        date,
-        time: event.time,
-        location: `${event.venue} · ${event.city}`,
-        type: "Sports event",
       };
     }),
   ]
