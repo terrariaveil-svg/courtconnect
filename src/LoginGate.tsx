@@ -1623,8 +1623,6 @@ export default function LoginGate() {
         onClearVisits={clearRecentVisits}
         onOpenVisit={openVisit}
         onExplore={() => openSpaces('court')}
-        onImportLegacy={importLegacyRecords}
-        importStatus={legacyImportStatus}
         onHome={() => setScreen('home')}
       />
     );

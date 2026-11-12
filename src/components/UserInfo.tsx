@@ -26,8 +26,6 @@ type UserInfoProps = {
   onClearVisits?: () => void;
   onOpenVisit?: (visit: Visit) => void;
   onExplore?: () => void;
-  onImportLegacy?: () => void;
-  importStatus?: string;
 };
 
 function formatRegistrationDate(value?: string): string {
@@ -73,8 +71,6 @@ export default function UserInfo({
   onClearVisits,
   onOpenVisit,
   onExplore,
-  onImportLegacy,
-  importStatus,
 }: UserInfoProps) {
   const fitness = getFitnessOverview(bookings);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
@@ -313,16 +309,6 @@ export default function UserInfo({
             </div>
           </div>
         </section>
-
-        {onImportLegacy && (
-          <section className="user-section user-import-section">
-            <button type="button" className="user-import-btn" onClick={onImportLegacy}>
-              Import records from this browser
-            </button>
-            {importStatus && <p role="status">{importStatus}</p>}
-            <small>Existing browser passwords cannot be transferred; sign in with your Supabase account.</small>
-          </section>
-        )}
 
         {courts.length > 0 && (
           <section className="user-section" aria-labelledby="user-courts-title">
