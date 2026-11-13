@@ -1532,7 +1532,9 @@ export default function LoginGate() {
   const shell = {
     userName,
     unreadCount,
-    bookingCount: bookings.filter((booking) => booking.status !== 'Rejected').length,
+    bookingCount:
+      bookings.filter((booking) => booking.status !== 'Rejected').length +
+      Object.keys(myEventRegistrations).length,
     onHome: () => setScreen('home'),
     onOpenProfile: () => setScreen('profile'),
     onOpenBookings: () => setScreen('mybookings'),
@@ -1545,6 +1547,12 @@ export default function LoginGate() {
 
   const currentEvent = events.find(
     (event) => event.id === eventId,
+  );
+  const eventBookings = Object.entries(myEventRegistrations).flatMap(
+    ([eventId, registration]) => {
+      const event = events.find((item) => item.id === Number(eventId));
+      return event ? [{ event, ...registration }] : [];
+    },
   );
 
   if (screen === 'loading') {
@@ -1712,7 +1720,9 @@ export default function LoginGate() {
       <SpacesShell {...shell} active="bookings">
         <MyBookings
           bookings={bookings}
+          eventBookings={eventBookings}
           onCancel={cancelBooking}
+          onCancelEvent={cancelRegistration}
         />
       </SpacesShell>
     );

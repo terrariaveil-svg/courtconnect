@@ -319,7 +319,10 @@ export default function App() {
       <Navbar
         page={page}
         setPage={setPage}
-        bookingCount={bookings.filter((booking) => booking.status !== "Rejected").length}
+        bookingCount={
+          bookings.filter((booking) => booking.status !== "Rejected").length +
+          registeredEvents.length
+        }
       />
 
       <main className="main-content">
@@ -407,7 +410,17 @@ export default function App() {
         {page === "My Bookings" && (
           <MyBookings
             bookings={bookings}
+            eventBookings={registeredEvents.map((event) => ({
+              event,
+              spots: 1,
+              status: "Confirmed",
+            }))}
             onCancel={cancelBooking}
+            onCancelEvent={(id) =>
+              setRegisteredEvents((previous) =>
+                previous.filter((event) => event.id !== id),
+              )
+            }
           />
         )}
 
