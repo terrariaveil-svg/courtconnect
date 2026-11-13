@@ -77,18 +77,18 @@ export default function AdminDashboard({
   async function changeCourtRequestStatus(id: number, status: CourtRequestStatus) {
     const changed = await onCourtRequestStatusChange(id, status);
     setCourtActionError(
-      changed ? '' : 'The court request could not be updated. Check available storage and try again.',
+      changed ? '' : 'The facility request could not be updated. Check available storage and try again.',
     );
   }
 
   async function deleteCourt(court: Facility) {
-    if (!window.confirm(`Delete "${court.name}" from the available courts?`)) {
+    if (!window.confirm(`Delete "${court.name}" from the available facilities?`)) {
       return;
     }
 
     const deleted = await onDeleteCourt(court.id);
     setCourtActionError(
-      deleted ? '' : 'The court could not be deleted. Check available storage and try again.',
+      deleted ? '' : 'The facility could not be deleted. Check available storage and try again.',
     );
   }
 
@@ -120,12 +120,12 @@ export default function AdminDashboard({
     setCourtFormError('');
 
     if (!courtImage || !courtImage.type.startsWith('image/')) {
-      setCourtFormError('Choose an image file for the court.');
+      setCourtFormError('Choose an image file for the facility.');
       return;
     }
 
     if (courtImage.size > 2 * 1024 * 1024) {
-      setCourtFormError('The court image must be 2 MB or smaller.');
+      setCourtFormError('The facility image must be 2 MB or smaller.');
       return;
     }
 
@@ -153,7 +153,7 @@ export default function AdminDashboard({
       });
 
       if (!added) {
-        setCourtFormError('The court could not be saved on this device. Check available storage and try again.');
+        setCourtFormError('The facility could not be saved. Check available storage and try again.');
         return;
       }
 
@@ -195,8 +195,8 @@ export default function AdminDashboard({
       <section className="admin-section" aria-labelledby="admin-courts-title">
         {importStatus && <p className="admin-empty" role="status">{importStatus}</p>}
         <div className="admin-section-heading">
-          <h2 id="admin-courts-title">Manage courts</h2>
-          <span>{courts.length} courts available</span>
+          <h2 id="admin-courts-title">Manage courts and gyms</h2>
+          <span>{courts.length} facilities available</span>
         </div>
         {courtStorageError && <p className="admin-form-error" role="alert">{courtStorageError}</p>}
         {courtRequestStorageError && <p className="admin-form-error" role="alert">{courtRequestStorageError}</p>}
@@ -207,13 +207,14 @@ export default function AdminDashboard({
             <input value={courtName} onChange={(event) => setCourtName(event.target.value)} required />
           </label>
           <label>
-            Sport
+            Facility type
             <select value={courtType} onChange={(event) => setCourtType(event.target.value)}>
               <option>Basketball</option>
               <option>Volleyball</option>
               <option>Badminton</option>
               <option>Multi-sport</option>
               <option>Tennis</option>
+              <option>Gym floor</option>
             </select>
           </label>
           <label>
@@ -241,7 +242,7 @@ export default function AdminDashboard({
             />
           </label>
           <label className="admin-court-image">
-            Court picture (max 2 MB)
+            Facility picture (max 2 MB)
             <input
               type="file"
               accept="image/*"
@@ -251,7 +252,7 @@ export default function AdminDashboard({
           </label>
           {courtFormError && <p className="admin-form-error" role="alert">{courtFormError}</p>}
           <button type="submit" className="admin-approve admin-add-court">
-            Add court
+            Add facility
           </button>
         </form>
 
@@ -260,7 +261,7 @@ export default function AdminDashboard({
             {courts.map((court) => (
               <li key={court.id}>
                 <img src={court.image} alt="" />
-                <span><strong>{court.name}</strong>{court.location}</span>
+                <span><strong>{court.name}</strong>{court.type} · {court.location}</span>
                 <strong>₱{court.price} / hour</strong>
                 <button
                   type="button"
@@ -278,11 +279,11 @@ export default function AdminDashboard({
 
       <section className="admin-section" aria-labelledby="admin-court-requests-title">
         <div className="admin-section-heading">
-          <h2 id="admin-court-requests-title">Court addition requests</h2>
+          <h2 id="admin-court-requests-title">Facility addition requests</h2>
           <span>{pendingCourtRequests.length} pending</span>
         </div>
         {pendingCourtRequests.length === 0 ? (
-          <p className="admin-empty">No court requests need approval.</p>
+          <p className="admin-empty">No facility requests need approval.</p>
         ) : (
           <ul className="admin-list">
             {pendingCourtRequests.map((request) => (
@@ -293,7 +294,7 @@ export default function AdminDashboard({
                   <span>{request.type} · {request.location}</span>
                   <span>₱{request.price} / hour</span>
                   <span>{request.description}</span>
-                  <img className="admin-request-image" src={request.image} alt={`${request.name} court`} />
+                  <img className="admin-request-image" src={request.image} alt={`${request.name} facility`} />
                 </div>
                 <div className="admin-actions">
                   <button

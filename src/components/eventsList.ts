@@ -25,6 +25,7 @@ export type NewEvent = {
   venue: string;
   price: number;
   spots: number;
+  image: string;
 };
 
 export const CATEGORIES: { id: EventCategory; label: string; emoji: string }[] = [
@@ -107,7 +108,7 @@ export function makeEvent(id: number, data: NewEvent): ClubEvent {
     spotsLeft: data.spots,
     organizer: 'You',
     description: `${data.name} is open to everyone. Register to save your spot.`,
-    image: IMAGES[data.category],
+    image: data.image,
   };
 }
 

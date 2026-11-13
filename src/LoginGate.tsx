@@ -227,7 +227,7 @@ export default function LoginGate() {
     error: '',
   });
   const {
-    courts: customCourts,
+    courts: customFacilities,
     error: courtStorageError,
   } = courtStorage;
   const [courtRequestStorage, setCourtRequestStorage] = useState({
@@ -915,7 +915,7 @@ export default function LoginGate() {
     }
 
     const matches = searchFacilities(
-      [...COURTS, ...GYMS, ...customCourts],
+      [...COURTS, ...GYMS, ...customFacilities],
       normalizedQuery,
     );
     const firstMatch = matches[0];
@@ -1585,7 +1585,7 @@ export default function LoginGate() {
     return (
       <AdminDashboard
         bookings={bookings}
-        courts={customCourts}
+        courts={customFacilities}
         courtRequests={courtRequests}
         courtStorageError={courtStorageError}
         courtRequestStorageError={courtRequestStorageError}
@@ -1617,7 +1617,7 @@ export default function LoginGate() {
         onBookingStatusChange={updateBookingStatus}
         onSaveAddress={saveProfileAddress}
         onSaveAvatar={saveProfileAvatar}
-        courts={customCourts.filter((court) => court.ownerId === userId)}
+        courts={customFacilities.filter((court) => court.ownerId === userId)}
         onUpdateCourt={updateCourt}
         onDeleteCourt={deleteCourt}
         onClearVisits={clearRecentVisits}
@@ -1640,7 +1640,7 @@ export default function LoginGate() {
     return (
       <SpacesPage
         choice={spaceChoice}
-        customCourts={customCourts}
+        customFacilities={customFacilities}
         courtRequests={courtRequests.filter(
           (request) => request.requesterEmail === userEmail,
         )}

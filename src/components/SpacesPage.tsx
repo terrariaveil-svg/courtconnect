@@ -9,13 +9,13 @@ import './SpacesPage.css';
 
 type SpacesPageProps = {
   choice: SpaceChoice;
-  customCourts: Facility[];
+  customFacilities: Facility[];
   courtRequests: CourtRequest[];
   courtRequestStorageError: string;
   initialFacilityId?: number | null;
   searchValue?: string;
   onFacilityViewed: (facility: Facility) => void;
-  onRequestCourt: (court: Omit<Facility, 'id'>) => boolean | Promise<boolean>;
+  onRequestCourt: (facility: Omit<Facility, 'id'>) => boolean | Promise<boolean>;
   onChoiceChange: (choice: SpaceChoice) => void;
   onBooked: (booking: Booking) => void;
   userName?: string;
@@ -32,7 +32,7 @@ type SpacesPageProps = {
 
 export default function SpacesPage({
   choice,
-  customCourts,
+  customFacilities,
   courtRequests,
   courtRequestStorageError,
   initialFacilityId,
@@ -51,20 +51,22 @@ export default function SpacesPage({
   onOpenNotifications,
   onSearch,
 }: SpacesPageProps) {
-  const [courtName, setCourtName] = useState('');
-  const [courtType, setCourtType] = useState('Basketball');
-  const [courtLocation, setCourtLocation] = useState('');
-  const [courtPrice, setCourtPrice] = useState('');
-  const [courtDescription, setCourtDescription] = useState('');
-  const [courtImage, setCourtImage] = useState<File | null>(null);
-  const [courtFormError, setCourtFormError] = useState('');
-  const [courtFormMessage, setCourtFormMessage] = useState('');
+  const [facilityName, setFacilityName] = useState('');
+  const [facilityType, setFacilityType] = useState('Basketball');
+  const [facilityLocation, setFacilityLocation] = useState('');
+  const [facilityPrice, setFacilityPrice] = useState('');
+  const [facilityDescription, setFacilityDescription] = useState('');
+  const [facilityImage, setFacilityImage] = useState<File | null>(null);
+  const [facilityFormError, setFacilityFormError] = useState('');
+  const [facilityFormMessage, setFacilityFormMessage] = useState('');
   const facilities = [
     ...spacesFor(choice),
-    ...(choice === 'court' ? customCourts : []),
+    ...customFacilities.filter((facility) =>
+      choice === 'gym' ? facility.type === 'Gym floor' : facility.type !== 'Gym floor',
+    ),
   ];
   const matchingFacilities = searchValue.trim()
-    ? searchFacilities([...COURTS, ...GYMS, ...customCourts], searchValue)
+    ? searchFacilities([...COURTS, ...GYMS, ...customFacilities], searchValue)
     : facilities;
 
   const [selection, setSelection] = useState({
@@ -85,19 +87,19 @@ export default function SpacesPage({
     matchingFacilities.find((item) => item.id === selectedFacilityId) ??
     matchingFacilities[0];
 
-  async function submitCourtRequest(event: FormEvent<HTMLFormElement>) {
+  async function submitFacilityRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-    setCourtFormError('');
-    setCourtFormMessage('');
+    setFacilityFormError('');
+    setFacilityFormMessage('');
 
-    if (!courtImage || !courtImage.type.startsWith('image/')) {
-      setCourtFormError('Choose an image file for the court.');
+    if (!facilityImage || !facilityImage.type.startsWith('image/')) {
+      setFacilityFormError(`Choose an image file for the ${choice === 'gym' ? 'gym' : 'court'}.`);
       return;
     }
 
-    if (courtImage.size > 2 * 1024 * 1024) {
-      setCourtFormError('The court image must be 2 MB or smaller.');
+    if (facilityImage.size > 2 * 1024 * 1024) {
+      setFacilityFormError('The facility image must be 2 MB or smaller.');
       return;
     }
 
@@ -112,33 +114,33 @@ export default function SpacesPage({
           }
         };
         reader.onerror = () => reject(new Error('The selected image could not be read.'));
-        reader.readAsDataURL(courtImage);
+        reader.readAsDataURL(facilityImage);
       });
 
       const saved = await onRequestCourt({
-        name: courtName.trim(),
-        type: courtType,
-        location: courtLocation.trim(),
-        price: Number(courtPrice),
+        name: facilityName.trim(),
+        type: choice === 'gym' ? 'Gym floor' : facilityType,
+        location: facilityLocation.trim(),
+        price: Number(facilityPrice),
         image,
-        description: courtDescription.trim(),
+        description: facilityDescription.trim(),
       });
 
       if (!saved) {
-        setCourtFormError('Your request could not be saved on this device. Check available storage and try again.');
+        setFacilityFormError('Your request could not be saved. Check available storage and try again.');
         return;
       }
 
-      setCourtName('');
-      setCourtType('Basketball');
-      setCourtLocation('');
-      setCourtPrice('');
-      setCourtDescription('');
-      setCourtImage(null);
+      setFacilityName('');
+      setFacilityType('Basketball');
+      setFacilityLocation('');
+      setFacilityPrice('');
+      setFacilityDescription('');
+      setFacilityImage(null);
       form.reset();
-      setCourtFormMessage('Your court request was sent to the admin for approval.');
+      setFacilityFormMessage(`Your ${choice} request was sent to the admin for approval.`);
     } catch (error) {
-      setCourtFormError(
+      setFacilityFormError(
         error instanceof Error ? error.message : 'The selected image could not be read.',
       );
     }
@@ -176,36 +178,43 @@ export default function SpacesPage({
           {searchValue.trim() && <p>No venues, sports, or locations match “{searchValue.trim()}”.</p>}
         </section>
       )}
-      {choice === 'court' && (
+      {(choice === 'court' || choice === 'gym') && (
         <section className="court-request-panel" aria-labelledby="court-request-title">
           <div className="court-request-heading">
             <div>
-              <span className="court-request-eyebrow">COURT OWNERS</span>
-              <h2 id="court-request-title">Request to add a court</h2>
-              <p>Submit your court details. It will be listed after an admin approves it.</p>
+              <span className="court-request-eyebrow">{choice === 'gym' ? 'GYM OWNERS' : 'COURT OWNERS'}</span>
+              <h2 id="court-request-title">Request to add a {choice}</h2>
+              <p>Submit your {choice} details. It will be listed after an admin approves it.</p>
             </div>
           </div>
           {courtRequestStorageError && (
             <p className="court-request-error" role="alert">{courtRequestStorageError}</p>
           )}
-          <form className="court-request-form" onSubmit={submitCourtRequest}>
+          <form className="court-request-form" onSubmit={submitFacilityRequest}>
             <label>
-              Court name
-              <input value={courtName} onChange={(event) => setCourtName(event.target.value)} required />
+              {choice === 'gym' ? 'Gym name' : 'Court name'}
+              <input value={facilityName} onChange={(event) => setFacilityName(event.target.value)} required />
             </label>
-            <label>
-              Sport
-              <select value={courtType} onChange={(event) => setCourtType(event.target.value)}>
-                <option>Basketball</option>
-                <option>Volleyball</option>
-                <option>Badminton</option>
-                <option>Multi-sport</option>
-                <option>Tennis</option>
-              </select>
-            </label>
+            {choice === 'court' ? (
+              <label>
+                Sport
+                <select value={facilityType} onChange={(event) => setFacilityType(event.target.value)}>
+                  <option>Basketball</option>
+                  <option>Volleyball</option>
+                  <option>Badminton</option>
+                  <option>Multi-sport</option>
+                  <option>Tennis</option>
+                </select>
+              </label>
+            ) : (
+              <label>
+                Facility type
+                <input value="Gym floor" readOnly />
+              </label>
+            )}
             <label>
               Location
-              <input value={courtLocation} onChange={(event) => setCourtLocation(event.target.value)} required />
+              <input value={facilityLocation} onChange={(event) => setFacilityLocation(event.target.value)} required />
             </label>
             <label>
               Price per hour (₱)
@@ -213,43 +222,43 @@ export default function SpacesPage({
                 type="number"
                 min="0"
                 step="1"
-                value={courtPrice}
-                onChange={(event) => setCourtPrice(event.target.value)}
+                value={facilityPrice}
+                onChange={(event) => setFacilityPrice(event.target.value)}
                 required
               />
             </label>
             <label className="court-request-wide">
               Description
               <textarea
-                value={courtDescription}
-                onChange={(event) => setCourtDescription(event.target.value)}
+                value={facilityDescription}
+                onChange={(event) => setFacilityDescription(event.target.value)}
                 rows={3}
                 required
               />
             </label>
             <label className="court-request-wide">
-              Court picture (max 2 MB)
+              {choice === 'gym' ? 'Gym picture' : 'Court picture'} (max 2 MB)
               <input
                 type="file"
                 accept="image/*"
-                onChange={(event) => setCourtImage(event.target.files?.[0] ?? null)}
+                onChange={(event) => setFacilityImage(event.target.files?.[0] ?? null)}
                 required
               />
             </label>
-            {courtFormError && <p className="court-request-error court-request-wide" role="alert">{courtFormError}</p>}
-            {courtFormMessage && <p className="court-request-success court-request-wide" role="status">{courtFormMessage}</p>}
+            {facilityFormError && <p className="court-request-error court-request-wide" role="alert">{facilityFormError}</p>}
+            {facilityFormMessage && <p className="court-request-success court-request-wide" role="status">{facilityFormMessage}</p>}
             <button type="submit" className="court-request-submit">Send for approval</button>
           </form>
 
           <div className="court-request-history">
-            <h3>Your court requests</h3>
+            <h3>Your facility requests</h3>
             {courtRequests.length === 0 ? (
-              <p>No court requests yet.</p>
+              <p>No facility requests yet.</p>
             ) : (
               <ul>
                 {courtRequests.map((request) => (
                   <li key={request.id}>
-                    <span><strong>{request.name}</strong>{request.location}</span>
+                    <span><strong>{request.name}</strong>{request.type} · {request.location}</span>
                     <span className={`court-request-status court-request-status-${request.status.toLowerCase()}`}>
                       {requestStatusLabel(request.status)}
                     </span>

@@ -85,6 +85,7 @@ export default function DiscoverEvents({
   const [fVenue, setFVenue] = useState('');
   const [fPrice, setFPrice] = useState('0');
   const [fSpots, setFSpots] = useState('20');
+  const [fImage, setFImage] = useState<File | null>(null);
   const [fError, setFError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
@@ -109,8 +110,9 @@ export default function DiscoverEvents({
     setDate(null);
   };
 
-  const submit = async (e: FormEvent) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget;
     const price = Number(fPrice);
     const spots = Number(fSpots);
 
@@ -120,9 +122,28 @@ export default function DiscoverEvents({
     if (!fDate || fDate < today) return setFError('Please choose a date that is today or later.');
     if (!Number.isFinite(price) || price < 0) return setFError('Price must be 0 or more.');
     if (!Number.isInteger(spots) || spots < 1) return setFError('Spots must be at least 1.');
+    if (!fImage || !fImage.type.startsWith('image/')) {
+      return setFError('Choose an image file for the event.');
+    }
+    if (fImage.size > 2 * 1024 * 1024) {
+      return setFError('The event image must be 2 MB or smaller.');
+    }
 
     setIsCreating(true);
     try {
+      const image = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            resolve(reader.result);
+          } else {
+            reject(new Error('The selected image could not be read.'));
+          }
+        };
+        reader.onerror = () => reject(new Error('The selected image could not be read.'));
+        reader.readAsDataURL(fImage);
+      });
+
       await onCreate({
         name: fName.trim(),
         category: fCategory,
@@ -131,12 +152,15 @@ export default function DiscoverEvents({
         venue: fVenue.trim(),
         price,
         spots,
+        image,
       });
 
       clearFilters();
       setCreateOpen(false);
       setFName('');
       setFVenue('');
+      setFImage(null);
+      form.reset();
     } catch (error) {
       setFError(error instanceof Error ? error.message : 'Unable to create the event.');
     } finally {
@@ -223,6 +247,7 @@ export default function DiscoverEvents({
               return (
                 <article className="de-card" key={e.id}>
                   <div className="de-cover" style={{ background: TINT[e.category] }}>
+                    <img className="de-cover-image" src={e.image} alt="" />
                     <span className="de-icon" aria-hidden="true">
                       {emojiFor(e.category)}
                     </span>
@@ -368,6 +393,16 @@ export default function DiscoverEvents({
             <label className="de-field">
               <span>Where</span>
               <input value={fVenue} placeholder="e.g. Rally Badminton Club" onChange={(e) => setFVenue(e.target.value)} />
+            </label>
+
+            <label className="de-field">
+              <span>Event picture (max 2 MB)</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFImage(e.target.files?.[0] ?? null)}
+                required
+              />
             </label>
 
             <div className="de-two">

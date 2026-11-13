@@ -173,6 +173,13 @@
 .de-cover {
   position: relative;
   height: 86px;
+  overflow: hidden;
+}
+
+.de-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .de-icon {
